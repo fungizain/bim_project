@@ -6,7 +6,7 @@ authors = [
     {name = "Simon",email = "you@example.com"}
 ]
 readme = "README.md"
-requires-python = "3.14"
+requires-python = ">=3.14,<3.15"
 dependencies = [
     "pypdf (>=5.1.0,<6.0.0)",
     "pymupdf (>=1.26.6,<2.0.0)",
