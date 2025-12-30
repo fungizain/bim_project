@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import List
 from sentence_transformers import SentenceTransformer
 
-from pdf_service import TEXT_FOLDER
+from src.pdf_service import TEXT_FOLDER
 
 @dataclass
 class DocChunk:

@@ -1,6 +1,6 @@
 # bim_project
 
-$env:PYTHONPATH="src"; poetry run uvicorn main:app --reload --host 0.0.0.0 --port 8000
+poetry run uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
 curl -X POST "http://localhost:8000/ask/" -F "query=What is the value of one bearing?"
 
