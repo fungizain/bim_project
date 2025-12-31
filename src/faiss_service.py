@@ -153,13 +153,11 @@ def prepare_prompt_from_query(
         "Use ONLY the provided context excerpts to answer.\n"
         "Do not add external knowledge. Do not repeat the context verbatim.\n"
         "The context may contain flattened tables extracted from PDFs.\n"
-        "Your task is to read these flattened rows and reconstruct the requested information into a clear structured table.\n"
-        "The table must follow exactly the columns requested in the question.\n"
-        "If multiple rows match, include them all in the table.\n"
-        "Give the closest possible answer from the table.\n"
-        "If the answer is not present in the context, reply exactly: 'Not found in context.'\n\n"
+        "Your task is to read these flattened rows and output only the requested answer.\n"
+        "Do not provide any explanation, reasoning, or commentary.\n"
+        "If a match is found in the context, output the matched answer directly and nothing else.\n"
         f"Context:\n{context}\n"
-        f"Question: {query}\nAnswer (in table format):"
+        f"Question: {query}\nAnswer:"
     )
 
     return prompt, hits
