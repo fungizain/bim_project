@@ -81,6 +81,13 @@ def extract_tables_tabula(pdf_path: Path):
 
     return json_records
 
+def normalize_context(table_json, page_contents):
+    context = {
+        "tables": table_json if table_json else [],
+        "pages": page_contents if page_contents else []
+    }
+    return json.dumps(context, ensure_ascii=False, indent=2)
+
 def process_pdf(input_pdf: Path,
                 output_pdf_folder: Path = OUTPUT_PDF_FOLDER,
                 output_text_folder: Path = TEXT_FOLDER,
@@ -97,19 +104,12 @@ def process_pdf(input_pdf: Path,
         output_pdf = output_pdf_folder / f"ocr_{input_pdf.name}"
         pdf_with_text = ensure_text_layer(input_pdf, output_pdf, lang=lang)
 
-        # 先試抽表格
         table_json = extract_tables_tabula(pdf_with_text)
-        if table_json and len(table_json) > 0:
-            full_text = "[Tables Extracted]\n" + json.dumps(table_json, indent=2, ensure_ascii=False)
-        else:
-            page_contents = extract_page_content(pdf_with_text)
-            full_text = "\n\n".join(
-                [f"[Page {c['page']} - {c['type']}]\n{c['content']}" for c in page_contents]
-            )
+        page_contents = extract_page_content(pdf_with_text)
 
-        print("Full text length:", len(full_text))
+        # 用 normalize_context 統一處理
+        full_text = normalize_context(table_json, page_contents)
 
-        # 寫入 txt
         with open(output_txt, "w", encoding="utf-8") as f:
             f.write(full_text)
         print("Txt file written successfully.")

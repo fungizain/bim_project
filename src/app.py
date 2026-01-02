@@ -14,18 +14,18 @@ embedder = get_embedder()
 qa_pipeline = get_pipeline()
 
 PROMPT_TEMPLATE = """You are assisting government department staff to retrieve information from official PDF documents.  
-The context may be provided in JSON objects or plain text paragraphs.  
+The context will be provided as plain text, which may include content extracted from tables.
 
 Instructions:  
 - If the context is JSON, treat it as structured data.  
 - Look for the key that matches the question (e.g. "Equipment No.") and return its value.  
 - Output ONLY the value.  
 - Do not add labels, explanations, or any other text.  
-- If no match exists, output exactly: Not found in context.  
 
 Context: {context}  
 Question: {query}  
-Final Answer:"""
+Final Answer:
+"""
 
 # ---------------- Gradio UI ----------------
 def gr_upload(files):
