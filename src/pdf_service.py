@@ -8,12 +8,7 @@ import shutil
 import tabula
 from fastapi import UploadFile
 
-UPLOAD_FOLDER = Path("src/upload_pdfs")
-OUTPUT_PDF_FOLDER = Path("src/output_pdfs")
-TEXT_FOLDER = Path("src/output_texts")
-
-for p in [UPLOAD_FOLDER, OUTPUT_PDF_FOLDER, TEXT_FOLDER]:
-    p.mkdir(parents=True, exist_ok=True)
+from src.folder_service import OUTPUT_PDF_FOLDER, UPLOAD_FOLDER, TEXT_FOLDER
 
 def ensure_text_layer(input_pdf: Path, output_pdf: Path, lang="eng"):
     """確保 PDF 有文字層，否則 OCR + Ghostscript fallback"""

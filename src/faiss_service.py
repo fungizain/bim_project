@@ -5,6 +5,7 @@ from typing import List
 from sentence_transformers import SentenceTransformer
 
 from src.pdf_service import TEXT_FOLDER
+from src.folder_service import FAISS_STORE
 
 @dataclass
 class DocChunk:
@@ -16,9 +17,6 @@ CHUNK_SIZE = 1000
 CHUNK_OVERLAP = 200
 TOP_K = 4
 MAX_CONTEXT_CHARS = 6000
-
-FAISS_STORE = Path("src/faiss_store")
-FAISS_STORE.mkdir(parents=True, exist_ok=True)
 
 # --------- Cache ---------
 FAISS_CACHE = {

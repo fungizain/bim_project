@@ -3,9 +3,10 @@ from fastapi.responses import JSONResponse
 import shutil
 from pathlib import Path
 
-from src.pdf_service import process_uploaded_pdf
+from src.folder_service import reset_folders
 from src.faiss_service import process_and_update_index, prepare_prompt_from_query
 from src.model_service import get_embedder, get_pipeline
+from src.pdf_service import process_uploaded_pdf
 
 import gradio as gr
 import os
@@ -91,11 +92,7 @@ def gr_ask(query):
         return f"Error: {str(e)}"
 
 def gr_reset():
-    for folder in ["src/upload_pdfs", "src/output_pdfs", "src/output_texts", "src/faiss_store"]:
-        if os.path.exists(folder):
-            shutil.rmtree(folder)
-            os.makedirs(folder, exist_ok=True)
-    return "✅ Reset success", ""
+    return reset_folders(), ""
 
 with gr.Blocks() as demo:
     gr.Markdown("## 📄 PDF QA Demo\nUpload PDFs → Ask Questions → Reset")
