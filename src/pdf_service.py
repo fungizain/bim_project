@@ -84,7 +84,7 @@ def extract_tables_tabula(pdf_path: Path):
 def process_pdf(input_pdf: Path,
                 output_pdf_folder: Path = OUTPUT_PDF_FOLDER,
                 output_text_folder: Path = TEXT_FOLDER,
-                lang="eng"):
+                lang="eng") -> str:
     """主流程：OCR → Tabula抽表格 → fitz抽文字 (fallback) → 合併輸出"""
     try:
         output_txt = output_text_folder / f"{input_pdf.stem}.txt"
@@ -99,7 +99,6 @@ def process_pdf(input_pdf: Path,
 
         # 先試抽表格
         table_json = extract_tables_tabula(pdf_with_text)
-
         if table_json and len(table_json) > 0:
             full_text = "[Tables Extracted]\n" + json.dumps(table_json, indent=2, ensure_ascii=False)
         else:
@@ -115,15 +114,15 @@ def process_pdf(input_pdf: Path,
             f.write(full_text)
         print("Txt file written successfully.")
 
-        return full_text, output_pdf, output_txt
+        return output_txt
     except Exception as e:
         print(f"Error in process_pdf: {e}")
-        return None, None, None
+        return None
 
 def process_uploaded_pdf(file: UploadFile,
                          output_pdf_folder: Path = OUTPUT_PDF_FOLDER,
                          output_text_folder: Path = TEXT_FOLDER,
-                         lang="eng"):
+                         lang="eng") -> str:
     pdf_path = UPLOAD_FOLDER / file.filename
     with open(pdf_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)

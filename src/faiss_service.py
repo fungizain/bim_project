@@ -1,7 +1,8 @@
-import faiss, pickle
+import faiss
+import pickle
 from pathlib import Path
 from dataclasses import dataclass
-from typing import List
+from typing import List, Tuple
 from sentence_transformers import SentenceTransformer
 
 from src.pdf_service import TEXT_FOLDER
@@ -130,6 +131,7 @@ def process_and_update_index(
 def prepare_prompt_from_query(
     query: str,
     embedder: SentenceTransformer,
+    prompt_template: str,
     top_k: int = TOP_K
 ) -> Tuple[str, list]:
     """
@@ -146,15 +148,5 @@ def prepare_prompt_from_query(
     hits = search_chunks(query, index, embedder, doc_chunks, top_k=top_k)
     context = build_context(hits)
 
-    prompt = (
-        "You are assisting a government department staff to retrieve information from official PDF documents.\n"
-        "The context may be provided in two possible formats:\n"
-        "1. JSON objects, where each object contains 'Attribute Name' and 'Attribute Values'.\n"
-        "2. Plain text paragraphs extracted from the PDF.\n"
-        "Your task is to read whichever format is provided and output only the requested answer.\n"
-        "If a match is found in the context, output the matched answer directly and nothing else.\n"
-        f"Context:\n{context}\n"
-        f"Question: {query}\nAnswer:"
-    )
-
+    prompt = prompt_template.format(context=context, query=query)
     return prompt, hits

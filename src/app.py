@@ -1,72 +1,41 @@
-from fastapi import FastAPI, UploadFile, File, Form
-from fastapi.responses import JSONResponse
-import shutil
-from pathlib import Path
+from fastapi import FastAPI, UploadFile
+import gradio as gr
+import os
 
 from src.folder_service import reset_folders
 from src.faiss_service import process_and_update_index, prepare_prompt_from_query
 from src.model_service import get_embedder, get_pipeline
 from src.pdf_service import process_uploaded_pdf
 
-import gradio as gr
-import os
+os.environ["JPYPE_JVM_OPTIONS"] = "--enable-native-access=ALL-UNNAMED"
 
 app = FastAPI()
-
 embedder = get_embedder()
 qa_pipeline = get_pipeline()
 
-# ---------------- FastAPI Endpoints ----------------
-@app.post("/upload_pdf/")
-async def upload_pdf(file: UploadFile = File(...)):
-    try:
-        # Step 1: OCR + 抽文字
-        full_text, output_pdf, output_txt= process_uploaded_pdf(file, lang="eng")
-        # Step 2: 更新 FAISS index (直接用 output_txt)
-        result = process_and_update_index(output_txt, embedder)
+PROMPT_TEMPLATE = """You are assisting government department staff to retrieve information from official PDF documents.  
+The context may be provided in JSON objects or plain text paragraphs.  
 
-        return {
-            "status": result["status"],
-            "file": file.filename,
-            "ocr_pdf": str(output_pdf) if output_pdf else None,
-            "text_file": str(result["text_file"]) if result["text_file"] else None,
-        }
-    except Exception as e:
-        return JSONResponse(status_code=500, content={"error": str(e)})
+Instructions:  
+- If the context is JSON, treat it as structured data.  
+- Look for the key that matches the question (e.g. "Equipment No.") and return its value.  
+- Output ONLY the value.  
+- Do not add labels, explanations, or any other text.  
+- If no match exists, output exactly: Not found in context.  
 
-@app.post("/ask/")
-async def ask_question(query: str = Form(...)):
-    try:
-        # 用 faiss_service 封裝好嘅方法
-        prompt, hits = prepare_prompt_from_query(query, embedder)
-        answer = qa_pipeline(
-            prompt,
-            max_new_tokens=256,
-            do_sample=False
-        )[0]["generated_text"]
-
-        return {
-            "query": query,
-            "answer": answer,
-            "context_hits": [
-                {"file": h.file_name, "chunk": h.chunk_id, "text": h.text[:200]}
-                for h in hits
-            ],
-        }
-
-    except Exception as e:
-        return JSONResponse(status_code=500, content={"error": str(e)})
+Context: {context}  
+Question: {query}  
+Final Answer:"""
 
 # ---------------- Gradio UI ----------------
 def gr_upload(files):
     results = []
     for f in files:
-        # 將 Gradio File 轉成 FastAPI UploadFile
         with open(f.name, "rb") as fh:
             upload_file = UploadFile(filename=os.path.basename(f.name), file=fh)
 
             # Step 1: OCR + 抽文字
-            full_text, output_pdf, output_txt = process_uploaded_pdf(upload_file, lang="eng")
+            output_txt = process_uploaded_pdf(upload_file, lang="eng")
 
             # Step 2: 更新 FAISS index
             if output_txt:
@@ -76,26 +45,31 @@ def gr_upload(files):
                 results.append(f"⚠️ Failed {upload_file.filename}")
     return "\n".join(results)
 
+def gr_reset():
+    return reset_folders(), ""
 
-def gr_ask(query):
+def gr_ask(query, prompt_template):
     try:
         # 用 faiss_service 封裝好嘅方法
-        prompt, hits = prepare_prompt_from_query(query, embedder)
+        prompt, hits = prepare_prompt_from_query(query, embedder, prompt_template)
         answer = qa_pipeline(
             prompt,
             max_new_tokens=128,
             do_sample=False
         )[0]["generated_text"]
 
-        return answer
-    except Exception as e:
-        return f"Error: {str(e)}"
+        # hits 全部顯示
+        hits_text = "\n\n".join(
+            [f"[{h.file_name} | chunk {h.chunk_id}]\n{h.text}" for h in hits]
+        )
 
-def gr_reset():
-    return reset_folders(), ""
+        return answer, hits_text
+    except Exception as e:
+        return f"Error: {str(e)}", ""
 
 with gr.Blocks() as demo:
     gr.Markdown("## 📄 PDF QA Demo\nUpload PDFs → Ask Questions → Reset")
+    prompt_state = gr.State(PROMPT_TEMPLATE)
 
     with gr.Tab("Upload"):
         pdfs = gr.File(label="Upload PDFs", file_types=[".pdf"], file_count="multiple")
@@ -111,11 +85,19 @@ with gr.Blocks() as demo:
         query = gr.Textbox(label="❓ Ask a question", placeholder="Type your question here...")
         ask_btn = gr.Button("🔍 Submit")
         answer = gr.Textbox(label="Answer", lines=8)
+        hits_box = gr.Textbox(label="Context Hits (Full)", lines=20)
+    
+    with gr.Tab("Settings"):
+        prompt_box = gr.Textbox(label="Prompt Template", value=PROMPT_TEMPLATE, lines=12)
+        save_btn = gr.Button("💾 Save Prompt")
 
     upload_btn.click(gr_upload, inputs=[pdfs], outputs=[upload_out])
     upload_btn.click(lambda: None, inputs=None, outputs=[pdfs])
-    ask_btn.click(gr_ask, inputs=[query], outputs=[answer])
     reset_btn.click(gr_reset, outputs=[reset_out, upload_out])
+
+    ask_btn.click(gr_ask, inputs=[query, prompt_box], outputs=[answer, hits_box])
+    save_btn.click(lambda new: new, inputs=[prompt_box], outputs=[prompt_state])
+
 
 # Mount Gradio UI into FastAPI
 app = gr.mount_gradio_app(app, demo, path="/ui", theme="soft")
