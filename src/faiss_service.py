@@ -150,11 +150,10 @@ def prepare_prompt_from_query(
 
     prompt = (
         "You are assisting a government department staff to retrieve information from official PDF documents.\n"
-        "Use ONLY the provided context excerpts to answer.\n"
-        "Do not add external knowledge. Do not repeat the context verbatim.\n"
-        "The context may contain flattened tables extracted from PDFs.\n"
-        "Your task is to read these flattened rows and output only the requested answer.\n"
-        "Do not provide any explanation, reasoning, or commentary.\n"
+        "The context may be provided in two possible formats:\n"
+        "1. JSON objects, where each object contains 'Attribute Name' and 'Attribute Values'.\n"
+        "2. Plain text paragraphs extracted from the PDF.\n"
+        "Your task is to read whichever format is provided and output only the requested answer.\n"
         "If a match is found in the context, output the matched answer directly and nothing else.\n"
         f"Context:\n{context}\n"
         f"Question: {query}\nAnswer:"
