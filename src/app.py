@@ -57,9 +57,9 @@ def gr_ask(query, prompt_template):
         prompt, hits = prepare_prompt_from_query(query, embedder, prompt_template)
         answer = qa_pipeline(
             prompt,
-            max_new_tokens=512,
+            max_new_tokens=256,
             do_sample=False
-        )[0]["generated_text"]
+        )[0]["generated_text"][-1]
 
         # hits 全部顯示
         hits_text = "\n\n".join(
