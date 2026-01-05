@@ -11,7 +11,8 @@ tokenizer = AutoTokenizer.from_pretrained(LLM_MODEL)
 llm_model = AutoModelForCausalLM.from_pretrained(
     LLM_MODEL,
     device_map="auto",
-    dtype="auto"
+    dtype="auto",
+    trust_remote_code=True
 )
 
 qa_pipeline = pipeline(
