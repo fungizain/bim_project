@@ -1,117 +1,92 @@
-import json
-import pandas as pd
 from pathlib import Path
-import fitz
+import pdfplumber
 import ocrmypdf
 import subprocess
 import shutil
-import tabula
 from fastapi import UploadFile
 
 from src.folder_service import OUTPUT_PDF_FOLDER, UPLOAD_FOLDER, TEXT_FOLDER
 
-def ensure_text_layer(input_pdf: Path, output_pdf: Path, lang="eng"):
-    """確保 PDF 有文字層，否則 OCR + Ghostscript fallback"""
+def has_text_layer(pdf_path: Path) -> bool:
+    """檢查 PDF 第一頁是否有文字層"""
     try:
-        doc = fitz.open(input_pdf)
-        text = doc[0].get_text()
-        doc.close()
-        if text.strip():
-            return input_pdf
-        try:
-            ocrmypdf.ocr(str(input_pdf), str(output_pdf), language=lang, skip_text=True)
-            return output_pdf
-        except Exception:
-            fixed_pdf = input_pdf.parent / f"fixed_{input_pdf.name}"
-            subprocess.run([
-                "gs", "-o", str(fixed_pdf),
-                "-sDEVICE=pdfwrite",
-                "-dPDFSETTINGS=/prepress",
-                str(input_pdf)
-            ], check=True)
-            ocrmypdf.ocr(str(fixed_pdf), str(output_pdf), language=lang, skip_text=True)
-            return output_pdf
+        with pdfplumber.open(pdf_path) as pdf:
+            first_page_text = pdf.pages[0].extract_text() or ""
+        return bool(first_page_text.strip())
+    except Exception:
+        return False
+
+
+def run_ocr(input_pdf: Path, output_pdf: Path, lang: str = "eng") -> Path:
+    """對 PDF 進行 OCR"""
+    ocrmypdf.ocr(str(input_pdf), str(output_pdf), language=lang, skip_text=True)
+    return output_pdf
+
+
+def fix_pdf_with_ghostscript(input_pdf: Path) -> Path:
+    """用 Ghostscript 修復 PDF"""
+    fixed_pdf = input_pdf.parent / f"fixed_{input_pdf.name}"
+    subprocess.run([
+        "gs", "-o", str(fixed_pdf),
+        "-sDEVICE=pdfwrite",
+        "-dPDFSETTINGS=/prepress",
+        str(input_pdf)
+    ], check=True)
+    return fixed_pdf
+
+
+def extract_text_pages(pdf_path: Path) -> str:
+    """逐頁提取文字"""
+    text = ""
+    with pdfplumber.open(pdf_path) as pdf:
+        for page in pdf.pages:
+            page_text = page.extract_text()
+            if page_text:
+                text += page_text.strip() + "\n\n"
+    return text.strip()
+
+
+def extract_text_from_pdf(input_pdf: Path,
+                          output_pdf_folder: Path = OUTPUT_PDF_FOLDER,
+                          lang: str = "eng") -> str:
+    """
+    主流程：
+    1. 檢查 PDF 是否有文字層
+    2. 如果冇 → OCR
+    3. OCR 失敗 → Ghostscript 修復再 OCR
+    4. 提取文字
+    """
+    try:
+        output_pdf = output_pdf_folder / f"ocr_{input_pdf.name}"
+
+        if has_text_layer(input_pdf):
+            pdf_to_read = input_pdf
+        else:
+            try:
+                pdf_to_read = run_ocr(input_pdf, output_pdf, lang)
+            except Exception:
+                fixed_pdf = fix_pdf_with_ghostscript(input_pdf)
+                pdf_to_read = run_ocr(fixed_pdf, output_pdf, lang)
+
+        return extract_text_pages(pdf_to_read)
+
     except Exception as e:
-        raise RuntimeError(f"PDF 無法處理: {e}")
+        return f"Error processing PDF: {str(e)}"
 
-def extract_page_content(pdf_path: Path):
-    """用 fitz 抽取每頁文字"""
-    results = []
-    doc = fitz.open(pdf_path)
-    for page_num in range(len(doc)):
-        text = doc[page_num].get_text()
-        results.append({
-            "page": page_num + 1,
-            "type": "Text",
-            "content": text.strip()
-        })
-    doc.close()
-    return results
-
-def extract_tables_tabula(pdf_path: Path):
-    """用 Tabula 抽取表格，智能判斷是否繼承上一頁 column，並輸出 JSON"""
-    dfs = tabula.read_pdf(str(pdf_path), pages="all", multiple_tables=True)
-    json_records = []
-    last_columns = None
-
-    if dfs and len(dfs) > 0:
-        for idx, df in enumerate(dfs, start=1):
-            # 判斷是否需要繼承上一頁 column
-            if last_columns is not None and any("Unnamed" in str(c) for c in df.columns):
-                if len(df.columns) == len(last_columns):
-                    df.columns = last_columns
-                else:
-                    # 如果長度唔對，就只取前兩個 column
-                    df = df.iloc[:, :len(last_columns)]
-                    df.columns = last_columns
-            else:
-                last_columns = df.columns
-
-            # flatten DataFrame → JSON
-            for _, row in df.iterrows():
-                record = {}
-                for col in df.columns:
-                    val = row[col]
-                    if pd.notna(val):
-                        record[col] = str(val).strip()
-                    else:
-                        record[col] = ""
-                if record:  # 避免空行
-                    json_records.append(record)
-
-    return json_records
-
-def normalize_context(table_json, page_contents):
-    context = {
-        "tables": table_json if table_json else [],
-        "pages": page_contents if page_contents else []
-    }
-    return json.dumps(context, ensure_ascii=False, indent=2)
 
 def process_pdf(input_pdf: Path,
                 output_pdf_folder: Path = OUTPUT_PDF_FOLDER,
                 output_text_folder: Path = TEXT_FOLDER,
-                lang="eng") -> str:
-    """主流程：OCR → Tabula抽表格 → fitz抽文字 (fallback) → 合併輸出"""
+                lang: str = "eng") -> str:
     try:
         output_txt = output_text_folder / f"{input_pdf.stem}.txt"
-        print("Output txt path:", output_txt)
-
         if output_txt.exists():
             print("Txt file already exists, skip writing.")
             return None, None, output_txt
 
-        output_pdf = output_pdf_folder / f"ocr_{input_pdf.name}"
-        pdf_with_text = ensure_text_layer(input_pdf, output_pdf, lang=lang)
-
-        table_json = extract_tables_tabula(pdf_with_text)
-        page_contents = extract_page_content(pdf_with_text)
-
-        # 用 normalize_context 統一處理
-        full_text = normalize_context(table_json, page_contents)
-
+        text = extract_text_from_pdf(input_pdf, output_pdf_folder, lang)
         with open(output_txt, "w", encoding="utf-8") as f:
-            f.write(full_text)
+            f.write(text)
         print("Txt file written successfully.")
 
         return output_txt
@@ -119,10 +94,11 @@ def process_pdf(input_pdf: Path,
         print(f"Error in process_pdf: {e}")
         return None
 
+
 def process_uploaded_pdf(file: UploadFile,
                          output_pdf_folder: Path = OUTPUT_PDF_FOLDER,
                          output_text_folder: Path = TEXT_FOLDER,
-                         lang="eng") -> str:
+                         lang: str = "eng") -> str:
     pdf_path = UPLOAD_FOLDER / file.filename
     with open(pdf_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
