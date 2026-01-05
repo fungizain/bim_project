@@ -4,7 +4,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 EMBED_MODEL = "sentence-transformers/all-mpnet-base-v2"
 model_type = "text-generation"
 # LLM_MODEL = "Qwen/Qwen3-0.6B"
-LLM_MODEL = "meta-llama/Meta-Llama-3.1-8B-Instruct"
+LLM_MODEL = "tencent/WeDLM-8B-Instruct"
 
 embedder = SentenceTransformer(EMBED_MODEL)
 tokenizer = AutoTokenizer.from_pretrained(LLM_MODEL)
