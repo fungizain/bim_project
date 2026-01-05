@@ -82,7 +82,7 @@ def process_pdf(input_pdf: Path,
         output_txt = output_text_folder / f"{input_pdf.stem}.txt"
         if output_txt.exists():
             print("Txt file already exists, skip writing.")
-            return None, None, output_txt
+            return output_txt
 
         text = extract_text_from_pdf(input_pdf, output_pdf_folder, lang)
         with open(output_txt, "w", encoding="utf-8") as f:

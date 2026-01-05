@@ -2,7 +2,8 @@ from sentence_transformers import SentenceTransformer
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 
 EMBED_MODEL = "sentence-transformers/all-mpnet-base-v2"
-LLM_MODEL = "Qwen/Qwen2.5-0.5B-Instruct"
+model_type = "text-generation"
+LLM_MODEL = "Qwen/Qwen3-0.6B"
 
 embedder = SentenceTransformer(EMBED_MODEL)
 tokenizer = AutoTokenizer.from_pretrained(LLM_MODEL)
@@ -13,7 +14,7 @@ llm_model = AutoModelForCausalLM.from_pretrained(
 )
 
 qa_pipeline = pipeline(
-    "text-generation",
+    model_type,
     model=llm_model,
     tokenizer=tokenizer,
     return_full_text=False   # 只要答案部分

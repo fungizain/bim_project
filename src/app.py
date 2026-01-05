@@ -13,18 +13,21 @@ app = FastAPI()
 embedder = get_embedder()
 qa_pipeline = get_pipeline()
 
-PROMPT_TEMPLATE = """You are assisting government department staff to retrieve information from official PDF documents.  
-The context will be provided as plain text, which may include content extracted from tables.
+PROMPT_TEMPLATE = """
+Read the following document and answer the question.
+Keep the answer unique.
 
-Instructions:  
-- If the context is JSON, treat it as structured data.  
-- Look for the key that matches the question (e.g. "Equipment No.") and return its value.  
-- Output ONLY the value.  
-- Do not add labels, explanations, or any other text.  
+Follow this structured reasoning:
+1. Identify key sections & main topics.
+2. Extract essential points from each section.
+3. Remove redundant information.
+4. Ensure accuracy without hallucination.
+5. Output only one concise answer.
 
-Context: {context}  
-Question: {query}  
-Final Answer:
+Question:
+{query}
+Document:
+{context}
 """
 
 # ---------------- Gradio UI ----------------
@@ -54,7 +57,7 @@ def gr_ask(query, prompt_template):
         prompt, hits = prepare_prompt_from_query(query, embedder, prompt_template)
         answer = qa_pipeline(
             prompt,
-            max_new_tokens=128,
+            max_new_tokens=512,
             do_sample=False
         )[0]["generated_text"]
 
