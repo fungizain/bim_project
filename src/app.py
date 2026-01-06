@@ -24,10 +24,9 @@ Follow this structured reasoning:
 4. Ensure accuracy without hallucination.
 5. Output only one concise answer.
 
-Question:
-{query}
-Document:
-{context}
+Question: {query}
+Document: {context}
+Answer:
 """
 
 # ---------------- Gradio UI ----------------
@@ -57,9 +56,9 @@ def gr_ask(query, prompt_template):
         prompt, hits = prepare_prompt_from_query(query, embedder, prompt_template)
         answer = qa_pipeline(
             prompt,
-            max_new_tokens=256,
+            max_new_tokens=64,
             do_sample=False
-        )[0]["generated_text"][-1]
+        )[0]["generated_text"]
 
         # hits 全部顯示
         hits_text = "\n\n".join(
