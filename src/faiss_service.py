@@ -1,3 +1,4 @@
+import json
 import faiss
 import pickle
 from pathlib import Path
@@ -10,7 +11,8 @@ from src.folder_service import FAISS_STORE
 
 @dataclass
 class DocChunk:
-    file_name: str
+    filename: str
+    page: int
     chunk_id: int
     text: str
 
@@ -58,15 +60,27 @@ def load_faiss_index(save_dir: Path):
     return index, meta["doc_chunks"]
 
 # --------- Update FAISS ---------
-def update_faiss(embedder: SentenceTransformer):
+def update_faiss(json_file: Path, embedder: SentenceTransformer):
     doc_chunks = []
 
-    # 處理 txt files
-    for file in TEXT_FOLDER.glob("*.txt"):
-        content = file.read_text(encoding="utf-8", errors="ignore")
-        chunks = chunk_text(content, CHUNK_SIZE, CHUNK_OVERLAP)
-        for i, ch in enumerate(chunks):
-            doc_chunks.append(DocChunk(file_name=file.name, chunk_id=i, text=ch))
+    # 確認 JSON 存在
+    if not json_file.exists():
+        raise FileNotFoundError(f"JSON file not found: {json_file}")
+    
+    # 讀 JSON
+    with open(json_file, "r", encoding="utf-8") as f:
+        pages = json.load(f)
+
+    # 處理每一頁
+    for i, entry in enumerate(pages):
+        doc_chunks.append(
+            DocChunk(
+                filename=entry.get("filename"),
+                page=entry.get("page"),
+                chunk_id=i,
+                text=entry.get("text", "").strip()
+            )
+        )
 
     # 建立 FAISS index
     if not doc_chunks:
@@ -89,15 +103,24 @@ def get_faiss_index():
     return FAISS_CACHE["index"], FAISS_CACHE["doc_chunks"]
 
 # --------- Search ---------
-def search_chunks(query: str, index, embedder, doc_chunks: List[DocChunk], top_k: int = TOP_K) -> List[DocChunk]:
+def search_chunks(
+    query: str,
+    index,
+    embedder,
+    doc_chunks: List[DocChunk],
+    top_k: int = TOP_K
+) -> List[DocChunk]:
+    """用 FAISS 檢索 top-k chunks，返回 DocChunk list"""
     q_emb = embedder.encode([query], convert_to_numpy=True, normalize_embeddings=True)
     D, I = index.search(q_emb, top_k)
-    return [doc_chunks[i] for i in I[0]]
+    return [doc_chunks[i] for i in I[0] if i < len(doc_chunks)]
+
 
 def build_context(chunks: List[DocChunk], max_chars: int = MAX_CONTEXT_CHARS) -> str:
+    """將檢索到嘅 chunks 拼成 context，包含 file_name + page + chunk_id"""
     parts, length = [], 0
     for c in chunks:
-        header = f"[{c.file_name}#chunk-{c.chunk_id}]\n"
+        header = f"[{c.filename}#page-{c.page}#chunk-{c.chunk_id}]\n"
         candidate = header + c.text.strip() + "\n\n"
         if length + len(candidate) > max_chars:
             break
@@ -106,27 +129,17 @@ def build_context(chunks: List[DocChunk], max_chars: int = MAX_CONTEXT_CHARS) ->
     return "".join(parts)
 
 # --------- main ---------
-def process_and_update_index(
-    text_file: Path,
-    embedder: SentenceTransformer,
-    lang: str = "eng"
-):
+def process_and_update_index(json_file: Path, embedder: SentenceTransformer):
     """
     主流程：
-    1. 接收已經處理好嘅文字檔 (text_file)
+    1. 接收已經處理好嘅 JSON file
     2. 更新 FAISS index
     """
-    if text_file and text_file.exists():
-        update_faiss(embedder)
-        return {
-            "status": "success",
-            "text_file": text_file
-        }
-
-    return {
-        "status": "failed",
-        "text_file": None
-    }
+    if json_file and json_file.exists():
+        update_faiss(json_file, embedder)
+        return { "status": "success", "file": json_file }
+    else:
+        return { "status": "failed", "file": None }
 
 def prepare_prompt_from_query(
     query: str,

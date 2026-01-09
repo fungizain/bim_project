@@ -1,6 +1,7 @@
 from fastapi import FastAPI, UploadFile
 import gradio as gr
 import os
+import re
 
 from src.folder_service import reset_folders
 from src.faiss_service import process_and_update_index, prepare_prompt_from_query
@@ -24,8 +25,7 @@ Follow this structured reasoning:
 4. Ensure accuracy without hallucination.
 5. Output only one concise answer.
 6. Enclose the ENTIRE answer in double quotes ".
-7. Do not output "Answer:" or any other text.
-8. After the answer, specify the exact location where it was found in the document (page number and line number).
+7. After the answer, specify the exact location where it was found in the document in the format: "Answer: answer, File: file, Page: page, line: line".
 
 Question: {query}
 Document: {context}
@@ -40,11 +40,11 @@ def gr_upload(files):
             upload_file = UploadFile(filename=os.path.basename(f.name), file=fh)
 
             # Step 1: OCR + 抽文字
-            output = process_uploaded_pdf(upload_file, lang="eng")
+            output_json = process_uploaded_pdf(upload_file, lang="eng")
 
             # Step 2: 更新 FAISS index
-            if output:
-                process_and_update_index(output, embedder)
+            if output_json:
+                process_and_update_index(output_json, embedder)
                 results.append(f"✅ Uploaded & Indexed {upload_file.filename}")
             else:
                 results.append(f"⚠️ Failed {upload_file.filename}")
@@ -63,12 +63,14 @@ def gr_ask(query, prompt_template):
             do_sample=False,
         )
 
-        print(generated_ids[0])  # Debug: Print the full output
-        answer = generated_ids[0]['generated_text'].strip()
+        print(generated_ids)
+        raw = generated_ids[0]['generated_text'].strip()
+        m = re.search(r'"([^"]+)"', raw)
+        answer = m.group(1) if m else raw
 
         # hits 全部顯示
         hits_text = "\n\n".join(
-            [f"[{h.file_name} | chunk {h.chunk_id}]\n{h.text}" for h in hits]
+            [f"[{h.filename} | chunk {h.chunk_id}]\n{h.text}" for h in hits]
         )
 
         return answer, hits_text
