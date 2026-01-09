@@ -23,6 +23,9 @@ Follow this structured reasoning:
 3. Remove redundant information.
 4. Ensure accuracy without hallucination.
 5. Output only one concise answer.
+6. Enclose the ENTIRE answer in double quotes ".
+7. Do not output "Answer:" or any other text.
+8. After the answer, specify the exact location where it was found in the document (page number and line number).
 
 Question: {query}
 Document: {context}
@@ -37,11 +40,11 @@ def gr_upload(files):
             upload_file = UploadFile(filename=os.path.basename(f.name), file=fh)
 
             # Step 1: OCR + 抽文字
-            output_txt = process_uploaded_pdf(upload_file, lang="eng")
+            output = process_uploaded_pdf(upload_file, lang="eng")
 
             # Step 2: 更新 FAISS index
-            if output_txt:
-                process_and_update_index(output_txt, embedder)
+            if output:
+                process_and_update_index(output, embedder)
                 results.append(f"✅ Uploaded & Indexed {upload_file.filename}")
             else:
                 results.append(f"⚠️ Failed {upload_file.filename}")
@@ -54,11 +57,14 @@ def gr_ask(query, prompt_template):
     try:
         # 用 faiss_service 封裝好嘅方法
         prompt, hits = prepare_prompt_from_query(query, embedder, prompt_template)
-        answer = qa_pipeline(
+        generated_ids = qa_pipeline(
             prompt,
             max_new_tokens=64,
-            do_sample=False
-        )[0]["generated_text"]
+            do_sample=False,
+        )
+
+        print(generated_ids[0])  # Debug: Print the full output
+        answer = generated_ids[0]['generated_text'].strip()
 
         # hits 全部顯示
         hits_text = "\n\n".join(
