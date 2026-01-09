@@ -1,10 +1,17 @@
+import os
 from sentence_transformers import SentenceTransformer
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 
 EMBED_MODEL = "sentence-transformers/all-mpnet-base-v2"
 model_type = "text-generation"
-# LLM_MODEL = "Qwen/Qwen3-0.6B"
-LLM_MODEL = "Qwen/Qwen3-8B"
+
+env = os.getenv("APP_ENV")
+if env == "prod":
+    print("Running in production mode.")
+    LLM_MODEL = "Qwen/Qwen3-8B"
+else:
+    print("Running in development mode.")
+    LLM_MODEL = "Qwen/Qwen3-0.6B"
 
 embedder = SentenceTransformer(EMBED_MODEL)
 tokenizer = AutoTokenizer.from_pretrained(LLM_MODEL)

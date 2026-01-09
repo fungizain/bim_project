@@ -53,4 +53,5 @@ requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-bim-app = "src.main:main"
+bim-app-dev = "src.main:dev_main"
+bim-app-prod = "src.main:prod_main"
