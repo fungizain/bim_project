@@ -23,9 +23,10 @@ Follow this structured reasoning:
 2. Extract essential points from each section.
 3. Remove redundant information.
 4. Ensure accuracy without hallucination.
-5. Output only one concise answer.
-6. Enclose the ENTIRE answer in double quotes ".
-7. After the answer, specify the exact location where it was found in the document in the format: "Answer: answer, File: file, Page: page, line: line".
+5. Output at most 3 suitable answers. Most suitable at top.
+6. If manufacturer and model no. are provided in the question, try to match them.
+7. Enclose the ENTIRE answer in double quotes ".
+8. After the answer, specify the exact location where it was found in the document in the format: "Answer: answer, File: file, Page: page, line: line".
 
 Question: {query}
 Document: {context}
@@ -65,7 +66,8 @@ def gr_ask(query, prompt_template):
 
         print(generated_ids)
         raw = generated_ids[0]['generated_text'].strip()
-        m = re.search(r'"([^"]+)"', raw)
+        # m = re.search(r'"([^"]+)"', raw)
+        m = None
         answer = m.group(1) if m else raw
 
         # hits 全部顯示
