@@ -3,7 +3,7 @@ Description=BIM App Service
 After=network.target
 
 [Service]
-WorkingDirectory=/root/bim-project
+WorkingDirectory=/root/bim_project
 ExecStart=/usr/local/bin/poetry run bim-app-prod
 Restart=always
 RestartSec=5
