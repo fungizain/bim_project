@@ -1,0 +1,12 @@
+[Unit]
+Description=BIM App (Docker)
+After=network.target docker.service
+Requires=docker.service
+
+[Service]
+ExecStart=/usr/bin/docker run --rm --name bim-app -p 8000:8000 bim-app:latest
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

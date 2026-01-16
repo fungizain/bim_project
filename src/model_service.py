@@ -1,5 +1,4 @@
 import os
-from sentence_transformers import SentenceTransformer
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 from langchain_huggingface import HuggingFaceEmbeddings
 
@@ -14,7 +13,6 @@ else:
     print("Running in development mode.")
     LLM_MODEL = "Qwen/Qwen3-0.6B"
 
-embedder = SentenceTransformer(EMBED_MODEL)
 tokenizer = AutoTokenizer.from_pretrained(LLM_MODEL)
 llm_model = AutoModelForCausalLM.from_pretrained(
     LLM_MODEL,
@@ -29,9 +27,6 @@ qa_pipeline = pipeline(
     tokenizer=tokenizer,
     return_full_text=False   # 只要答案部分
 )
-
-def get_embedder():
-    return embedder
 
 def get_langchain_embedder():
     return HuggingFaceEmbeddings(model_name=EMBED_MODEL)
