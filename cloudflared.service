@@ -3,7 +3,7 @@ Description=Cloudflare Tunnel (simple mode)
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/cloudflared tunnel --url http://localhost:8000
+ExecStart=/usr/local/bin/cloudflared tunnel --url http://localhost:8000
 Restart=always
 RestartSec=5
 
