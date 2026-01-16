@@ -1,7 +1,19 @@
 # bim_project
 
-poetry run uvicorn main:app --reload --host 0.0.0.0 --port 8000
+git clone https://github.com/fungizain/bim_project.git
+cd bim_project
 
-curl -X POST "http://localhost:8000/ask/" -F "query=What is the value of one bearing?"
+sudo ln -s $(pwd)/bim-app.service /etc/systemd/system/bim-app.service
+sudo ln -s $(pwd)/cloudflared.service /etc/systemd/system/cloudflared.service
 
-ssh -i 111.237.107.89 -p 54850
+sudo systemctl daemon-reload
+
+# 啟動 BIM App
+
+sudo systemctl start bim-app
+sudo systemctl enable bim-app
+
+# 啟動 Cloudflare Tunnel
+
+sudo systemctl start cloudflared
+sudo systemctl enable cloudflared
