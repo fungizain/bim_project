@@ -5,13 +5,12 @@ import gradio as gr
 
 from src.config import reset_folders
 from src.chroma_service import add_to_chroma, prepare_prompt_from_query
-from src.model_service import get_embedder, get_pipeline
+from src.model_service import get_pipeline
 from src.pdf_service import process_uploaded_pdf
 
 os.environ["JPYPE_JVM_OPTIONS"] = "--enable-native-access=ALL-UNNAMED"
 
 app = FastAPI()
-embedder = get_embedder()
 qa_pipeline = get_pipeline()
 
 PROMPT_TEMPLATE = """
