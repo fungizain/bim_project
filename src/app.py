@@ -57,7 +57,7 @@ def gr_ask(query, prompt_template):
 
         generated_ids = qa_pipeline(
             prompt,
-            max_new_tokens=256,
+            max_new_tokens=128,
             do_sample=False,
         )
 
