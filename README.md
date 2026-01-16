@@ -22,3 +22,8 @@ sudo systemctl enable cloudflared
 
 sudo systemctl start docker-bim-app
 sudo systemctl enable docker-bim-app
+
+# utils
+
+apt install poppler-utils -y
+apt install tesseract-ocr -y
