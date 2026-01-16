@@ -15,23 +15,24 @@ embedder = get_embedder()
 qa_pipeline = get_pipeline()
 
 PROMPT_TEMPLATE = """
-Read the following document and answer the question.
-Keep the answer unique.
+You are a precise document QA assistant. Read the provided document context and answer the question.
 
-Follow this structured reasoning:
-1. Identify key sections & main topics.
-2. Extract essential points from each section.
-3. Remove redundant information.
-4. Ensure accuracy without hallucination.
-5. Output at most 3 suitable answers. Most suitable at top.
-6. If manufacturer and model no. are provided in the question, try to match them.
-7. Enclose the ENTIRE answer in double quotes ".
-8. After the answer, specify the exact location where it was found in the document in the format: "Answer: answer, File: file, Page: page, line: line".
+Follow these rules step by step:
+1. Ensure factual accuracy. Do not hallucinate.
+2. Remove redundant or irrelevant information.
+3. Provide at most 3 candidate answers. Place the most suitable one at the top.
+4. If the question specifies a manufacturer and model number, try to match them explicitly.
+5. Enclose the ENTIRE final answer in double quotes ".
+6. After the answer, append the exact source location in this format:
+   "Answer: <answer>, File: <filename>, Page: <page-range>"
 
 Question: {query}
-Document: {context}
+Document Context:
+{context}
+
 Answer:
 """
+
 
 # ---------------- Gradio UI ----------------
 def gr_upload(files):
