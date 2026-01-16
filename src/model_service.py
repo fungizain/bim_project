@@ -1,6 +1,7 @@
 import os
 from sentence_transformers import SentenceTransformer
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
+from langchain_huggingface import HuggingFaceEmbeddings
 
 EMBED_MODEL = "sentence-transformers/all-mpnet-base-v2"
 model_type = "text-generation"
@@ -31,6 +32,9 @@ qa_pipeline = pipeline(
 
 def get_embedder():
     return embedder
+
+def get_langchain_embedder():
+    return HuggingFaceEmbeddings(model_name=EMBED_MODEL)
 
 def get_pipeline():
     return qa_pipeline

@@ -1,13 +1,16 @@
-from pathlib import Path
-from pdf_service import process_pdf
+from src.config import UPLOAD_PATH
+from src.chroma_service import add_to_chroma
+from src.pdf_service import load_pdf
 
 def test_process_pdf():
-    directory = Path("src/upload_pdfs/")
-    filenames = ["Testing File Simple.pdf"]
+    directory = UPLOAD_PATH
+    filenames = ["Testing File Simple.pdf", "Test Case 1_E1_CHR.pdf", "Test Case 2_88-111.pdf"]
 
-    pdf_file = directory / filenames[0]
-    text = process_pdf(pdf_file)
-    print(text)
+    for file in filenames:
+        file_path = directory / file
+        print(f"Processing file: {file_path}")
+        document = load_pdf(file_path)
+        add_to_chroma(document)
 
 def main():
     test_process_pdf()

@@ -4,6 +4,6 @@ __pycache__/
 .env
 test*
 assets/
-src/faiss_store/
-src/output*
-src/upload*
+src/chroma_db/
+src/output_files/
+src/upload_pdfs/

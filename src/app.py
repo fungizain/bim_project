@@ -1,10 +1,10 @@
-from fastapi import FastAPI, UploadFile
-import gradio as gr
 import os
 import re
+from fastapi import FastAPI, UploadFile
+import gradio as gr
 
-from src.folder_service import reset_folders
-from src.faiss_service import process_and_update_index, prepare_prompt_from_query
+from src.config import reset_folders
+from src.chroma_service import add_to_chroma, prepare_prompt_from_query
 from src.model_service import get_embedder, get_pipeline
 from src.pdf_service import process_uploaded_pdf
 
@@ -39,13 +39,10 @@ def gr_upload(files):
     for f in files:
         with open(f.name, "rb") as fh:
             upload_file = UploadFile(filename=os.path.basename(f.name), file=fh)
+            documents = process_uploaded_pdf(upload_file)
 
-            # Step 1: OCR + 抽文字
-            output_json = process_uploaded_pdf(upload_file, lang="eng")
-
-            # Step 2: 更新 FAISS index
-            if output_json:
-                process_and_update_index(output_json, embedder)
+            if len(documents) > 0:
+                add_to_chroma(documents)
                 results.append(f"✅ Uploaded & Indexed {upload_file.filename}")
             else:
                 results.append(f"⚠️ Failed {upload_file.filename}")
@@ -56,23 +53,25 @@ def gr_reset():
 
 def gr_ask(query, prompt_template):
     try:
-        # 用 faiss_service 封裝好嘅方法
-        prompt, hits = prepare_prompt_from_query(query, embedder, prompt_template)
+        prompt, hits = prepare_prompt_from_query(query, prompt_template)
+
         generated_ids = qa_pipeline(
             prompt,
-            max_new_tokens=64,
+            max_new_tokens=256,
             do_sample=False,
         )
 
         print(generated_ids)
-        raw = generated_ids[0]['generated_text'].strip()
+        raw = generated_ids[0]["generated_text"].strip()
+
+        # 如果有 regex 可以抽答案，否則直接用 raw
         # m = re.search(r'"([^"]+)"', raw)
-        m = None
-        answer = m.group(1) if m else raw
+        # answer = m.group(1) if m else raw
+        answer = raw
 
         # hits 全部顯示
         hits_text = "\n\n".join(
-            [f"[{h.filename} | chunk {h.chunk_id}]\n{h.text}" for h in hits]
+            [f"[{h.metadata.get('filename')} | chunk {h.metadata.get('chunk_id')}]\n{h.page_content}" for h in hits]
         )
 
         return answer, hits_text
