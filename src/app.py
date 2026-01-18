@@ -4,7 +4,7 @@ from fastapi import FastAPI, UploadFile
 import gradio as gr
 
 from src.config import reset_folders
-from src.chroma_service import add_to_chroma, prepare_prompt_from_query
+from src.chroma_service import add_to_chroma, delete_chroma_collection, prepare_prompt_from_query
 from src.model_service import get_pipeline
 from src.pdf_service import process_uploaded_pdf
 
@@ -49,7 +49,9 @@ def gr_upload(files):
     return "\n".join(results)
 
 def gr_reset():
-    return reset_folders(), ""
+    reset_result = reset_folders()
+    delete_chroma_collection()
+    return reset_result, ""
 
 def gr_ask(query, prompt_template):
     try:

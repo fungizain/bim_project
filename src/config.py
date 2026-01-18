@@ -11,7 +11,7 @@ for p in ALL_PATHS:
     p.mkdir(parents=True, exist_ok=True)
 
 def reset_folders():
-    for folder in ALL_PATHS:
+    for folder in [UPLOAD_PATH, OUTPUT_PATH]:
         if folder.exists():
             shutil.rmtree(folder)
         folder.mkdir(parents=True, exist_ok=True)
