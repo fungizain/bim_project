@@ -39,22 +39,21 @@ def delete_chroma_collection():
 
 def prepare_prompt_from_query(query: str, prompt_template: str, k: int = 3):
     collection = get_chroma_collection()
-    hits = collection.query(
+    results = collection.query(
         query_texts=[query],
         n_results=k,
         # where={"metadata_field": "is_equal_to_this"}, # optional filter
         # where_document={"$contains":"search_string"}  # optional filter
     )
 
-    documents = hits["documents"][0]
-    metadatas = hits["metadatas"][0]
-    context = "\n\n".join(
+    documents = results["documents"][0]
+    metadatas = results["metadatas"][0]
+    hits = "\n\n".join(
         [
             f"[chunk {m.get('chunk_id')} | source: {m.get('source')} | pages: {m.get('page_start')}-{m.get('page_end')}]\n{doc}"
             for m, doc in zip(metadatas, documents)
         ]
     )
 
-
-    prompt = prompt_template.format(context=context, query=query)
+    prompt = prompt_template.format(context=hits, query=query)
     return prompt, hits

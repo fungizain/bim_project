@@ -69,12 +69,7 @@ def gr_ask(query, prompt_template):
         # answer = m.group(1) if m else raw
         answer = raw
 
-        # hits 全部顯示
-        hits_text = "\n\n".join(
-            [f"[{h.metadata.get('filename')} | chunk {h.metadata.get('chunk_id')}]\n{h.page_content}" for h in hits]
-        )
-
-        return answer, hits_text
+        return answer, hits
     except Exception as e:
         return f"Error: {str(e)}", ""
 
