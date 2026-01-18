@@ -1,6 +1,6 @@
 import os
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
-from langchain_huggingface import HuggingFaceEmbeddings
+from sentence_transformers import SentenceTransformer
 
 EMBED_MODEL = "sentence-transformers/all-mpnet-base-v2"
 model_type = "text-generation"
@@ -28,8 +28,13 @@ qa_pipeline = pipeline(
     return_full_text=False   # 只要答案部分
 )
 
-def get_langchain_embedder():
-    return HuggingFaceEmbeddings(model_name=EMBED_MODEL)
+_model = SentenceTransformer(EMBED_MODEL)
+
+def get_embedder():
+    # chromadb 要求係一個 function，輸入 list[str] → 輸出 list[list[float]]
+    def embed_fn(texts: list[str]) -> list[list[float]]:
+        return _model.encode(texts).tolist()
+    return embed_fn
 
 def get_pipeline():
     return qa_pipeline

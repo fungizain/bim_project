@@ -3,7 +3,7 @@ from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from src.config import CHROMA_PATH
-from src.model_service import get_langchain_embedder
+from src.model_service import get_embedder
 
 client = chromadb.PersistentClient(path=CHROMA_PATH)
 
@@ -22,7 +22,7 @@ def split_documents(documents: list[Document]) -> list[Document]:
 def get_chroma_collection():
     collection = client.get_or_create_collection(
         name="bim_project",
-        embedding_function=get_langchain_embedder(),
+        embedding_function=get_embedder(),
     )
     return collection
 
