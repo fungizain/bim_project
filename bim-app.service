@@ -7,7 +7,6 @@ WorkingDirectory=/root/bim_project
 ExecStart=/usr/local/bin/poetry run bim-app-prod
 Restart=always
 RestartSec=5
-User=ubuntu
 
 [Install]
 WantedBy=multi-user.target

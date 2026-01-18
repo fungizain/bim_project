@@ -3,8 +3,6 @@
 git clone https://github.com/fungizain/bim_project.git
 cd bim_project
 
-chown -R ubuntu:ubuntu ~/bim-app/src
-
 docker build -t bim-app .
 docker run -d --name bim-app -p 8080:8080 bim-app
 
