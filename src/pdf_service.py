@@ -21,7 +21,6 @@ def parse_chunk(chunk) -> Document:
 
     elements = extract_orig_elements(data["orig_elements"])
     json_obj = json.loads(elements)
-    chunk_id = hashlib.md5(content.encode("utf-8")).hexdigest()
 
     result = []
     pages = []
@@ -36,6 +35,7 @@ def parse_chunk(chunk) -> Document:
             result.append(e["text"])
     content = "\n".join(result)
     page_range = (min(pages), max(pages))
+    chunk_id = hashlib.md5(content.encode("utf-8")).hexdigest()
 
     return Document(
         page_content=content,
