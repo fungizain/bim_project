@@ -1,6 +1,6 @@
 import os
+from chromadb.utils import embedding_functions
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
-from sentence_transformers import SentenceTransformer
 
 EMBED_MODEL = "sentence-transformers/all-mpnet-base-v2"
 model_type = "text-generation"
@@ -13,6 +13,7 @@ else:
     print("Running in development mode.")
     LLM_MODEL = "Qwen/Qwen3-0.6B"
 
+embed_fn = embedding_functions.SentenceTransformerEmbeddingFunction(model_name="all-MiniLM-L6-v2")
 tokenizer = AutoTokenizer.from_pretrained(LLM_MODEL)
 llm_model = AutoModelForCausalLM.from_pretrained(
     LLM_MODEL,
@@ -28,12 +29,7 @@ qa_pipeline = pipeline(
     return_full_text=False   # 只要答案部分
 )
 
-_model = SentenceTransformer(EMBED_MODEL)
-
 def get_embedder():
-    # chromadb 要求係一個 function，輸入 list[str] → 輸出 list[list[float]]
-    def embed_fn(texts: list[str]) -> list[list[float]]:
-        return _model.encode(texts).tolist()
     return embed_fn
 
 def get_pipeline():

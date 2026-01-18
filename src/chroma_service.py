@@ -22,7 +22,7 @@ def split_documents(documents: list[Document]) -> list[Document]:
 def get_chroma_collection():
     collection = client.get_or_create_collection(
         name="bim_project",
-        embedding_function=get_embedder(),
+        embedding_function=get_embedder()
     )
     return collection
 
