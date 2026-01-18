@@ -1,9 +1,11 @@
+import chromadb
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_chroma import Chroma
 
 from src.config import CHROMA_PATH
 from src.model_service import get_langchain_embedder
+
+client = chromadb.Client()
 
 def get_text_splitter() -> RecursiveCharacterTextSplitter:
     return RecursiveCharacterTextSplitter(
@@ -17,25 +19,34 @@ def split_documents(documents: list[Document]) -> list[Document]:
     text_splitter = get_text_splitter()
     return text_splitter.split_documents(documents)
 
-def get_chroma_collection() -> Chroma:
-    return Chroma(
-        collection_name="bim_project",
+def get_chroma_collection():
+    collection = client.get_or_create_collection(
+        name="bim_project",
         embedding_function=get_langchain_embedder(),
         persist_directory=CHROMA_PATH
     )
+    return collection
 
 def add_to_chroma(chunks: list[Document]):
-    chroma_collection = get_chroma_collection()
-    chroma_collection.add_documents(chunks)
+    collection = get_chroma_collection()
+    collection.upsert(
+        documents=[chunk.page_content for chunk in chunks],
+        metadatas=[chunk.metadata for chunk in chunks],
+        ids=[chunk.metadata.get("chunk_id") for chunk in chunks]
+    )
+    collection.persist()
 
 def delete_chroma_collection():
-    chroma_collection = get_chroma_collection()
-    chroma_collection.delete_collection()
-    print("🗑️ Deleted Chroma collection 'bim_project'")
+    client.delete_collection(name="bim_project")
 
 def prepare_prompt_from_query(query: str, prompt_template: str, k: int = 3):
-    chroma_collection = get_chroma_collection()
-    hits = chroma_collection.similarity_search(query, k=k)
+    collection = get_chroma_collection()
+    hits = collection.query(
+        query_texts=[query],
+        n_results=k,
+        # where={"metadata_field": "is_equal_to_this"}, # optional filter
+        # where_document={"$contains":"search_string"}  # optional filter
+    )
 
     context = "\n\n".join(
         [f"[chunk {h.metadata.get('chunk_id')}]\n{h.page_content}" for h in hits]
