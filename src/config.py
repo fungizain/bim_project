@@ -1,9 +1,14 @@
 from pathlib import Path
 import shutil
 
-UPLOAD_PATH = Path("src/upload_pdfs")
-CHROMA_PATH = Path("src/chroma_db")
-OUTPUT_PATH = Path("src/output_files")
+if Path("src").exists():
+    BASE_PATH = Path("src")
+else:
+    BASE_PATH = Path(".")
+
+UPLOAD_PATH = BASE_PATH / "upload_pdfs"
+CHROMA_PATH = BASE_PATH / "chroma_db"
+OUTPUT_PATH = BASE_PATH / "output_files"
 
 ALL_PATHS = [UPLOAD_PATH, CHROMA_PATH, OUTPUT_PATH]
 

@@ -1,4 +1,5 @@
 import base64
+import hashlib
 import json
 from pathlib import Path
 import zlib
@@ -20,6 +21,7 @@ def parse_chunk(chunk) -> Document:
 
     elements = extract_orig_elements(data["orig_elements"])
     json_obj = json.loads(elements)
+    chunk_id = hashlib.md5(content.encode("utf-8")).hexdigest()
 
     result = []
     pages = []
@@ -34,7 +36,6 @@ def parse_chunk(chunk) -> Document:
             result.append(e["text"])
     content = "\n".join(result)
     page_range = (min(pages), max(pages))
-    chunk_id = f"{filename}_p{page_range[0]}-{page_range[1]}_{len(result)}"
 
     return Document(
         page_content=content,
@@ -66,7 +67,14 @@ def load_pdf(file_path: Path) -> list[Document]:
         overlap=200,            # default 0
     )
 
-    pdf_chunks = [parse_chunk(chunk) for chunk in chunks]
+    pdf_chunks = []
+    seen_ids = set()
+    for chunk in chunks:
+        doc = parse_chunk(chunk)
+        cid = doc.metadata["chunk_id"]
+        if cid not in seen_ids:
+            seen_ids.add(cid)
+            pdf_chunks.append(doc)
     return pdf_chunks
 
 def process_uploaded_pdf(upload_file) -> list[Document]:
