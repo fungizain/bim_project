@@ -21,9 +21,8 @@ Follow these rules step by step:
 2. Remove redundant or irrelevant information.
 3. Provide at most 3 candidate answers. Place the most suitable one at the top.
 4. If the question specifies a manufacturer and model number, try to match them explicitly.
-5. Enclose the ENTIRE final answer in double quotes ".
-6. After the answer, append the exact source location in this format:
-   "Answer: <answer>, File: <filename>, Page: <page-range>"
+5. After each answer, append the exact source location and accuracy percentage in this format:
+   "Answer: <answer>, File: <filename>, Page: <page-range>, Accuracy: <percentage>%"
 
 Question: {query}
 Document Context:

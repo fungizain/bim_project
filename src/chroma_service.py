@@ -48,10 +48,13 @@ def prepare_prompt_from_query(query: str, prompt_template: str, k: int = 3):
 
     documents = results["documents"][0]
     metadatas = results["metadatas"][0]
+    distances = results["distances"][0]
     hits = "\n\n".join(
         [
-            f"[chunk {m.get('chunk_id')} | source: {m.get('source')} | pages: {m.get('page_start')}-{m.get('page_end')}]\n{doc}"
-            for m, doc in zip(metadatas, documents)
+            f"[chunk {m.get('chunk_id')} | distance: {dist:.4f}]\n"
+            f"source: {m.get('source')} | pages: {m.get('page_start')}-{m.get('page_end')}\n"
+            f"{doc}"
+            for m, doc, dist in zip(metadatas, documents, distances)
         ]
     )
 
