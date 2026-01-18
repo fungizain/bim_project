@@ -8,7 +8,8 @@ model_type = "text-generation"
 env = os.getenv("APP_ENV")
 if env == "prod":
     print("Running in production mode.")
-    LLM_MODEL = "Qwen/Qwen3-8B"
+    # LLM_MODEL = "Qwen/Qwen3-8B"
+    LLM_MODEL = "FutureMa/Eva-4B"
 else:
     print("Running in development mode.")
     LLM_MODEL = "Qwen/Qwen3-0.6B"
