@@ -46,9 +46,15 @@ def prepare_prompt_from_query(query: str, prompt_template: str, k: int = 3):
         # where_document={"$contains":"search_string"}  # optional filter
     )
 
+    documents = hits["documents"][0]
+    metadatas = hits["metadatas"][0]
     context = "\n\n".join(
-        [f"[chunk {h.metadata.get('chunk_id')}]\n{h.page_content}" for h in hits]
+        [
+            f"[chunk {m.get('chunk_id')} | source: {m.get('source')} | pages: {m.get('page_start')}-{m.get('page_end')}]\n{doc}"
+            for m, doc in zip(metadatas, documents)
+        ]
     )
+
 
     prompt = prompt_template.format(context=context, query=query)
     return prompt, hits
