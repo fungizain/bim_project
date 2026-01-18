@@ -5,7 +5,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from src.config import CHROMA_PATH
 from src.model_service import get_langchain_embedder
 
-client = chromadb.Client()
+client = chromadb.PersistentClient(path=CHROMA_PATH)
 
 def get_text_splitter() -> RecursiveCharacterTextSplitter:
     return RecursiveCharacterTextSplitter(
@@ -34,7 +34,6 @@ def add_to_chroma(chunks: list[Document]):
         metadatas=[chunk.metadata for chunk in chunks],
         ids=[chunk.metadata.get("chunk_id") for chunk in chunks]
     )
-    collection.persist()
 
 def delete_chroma_collection():
     client.delete_collection(name="bim_project")
