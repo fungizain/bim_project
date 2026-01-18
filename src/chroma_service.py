@@ -23,7 +23,6 @@ def get_chroma_collection():
     collection = client.get_or_create_collection(
         name="bim_project",
         embedding_function=get_langchain_embedder(),
-        persist_directory=CHROMA_PATH
     )
     return collection
 
