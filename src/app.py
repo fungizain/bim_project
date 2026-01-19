@@ -25,12 +25,11 @@ Follow these rules step by step:
 6. After each answer, append the exact source location and accuracy percentage in this format:
    "Answer: <answer>, File: <filename>, Page: <page-range>, Accuracy: <percentage>%"
 
+Question: {query}
 Document Context:
 {context}
+Answer:
 """
-
-if MODEL_TYPE == "text-generation":
-    PROMPT_TEMPLATE += "\n---\nQuestion: {query}\nAnswer:"
 
 # ---------------- Gradio UI ----------------
 def gr_upload(files):
