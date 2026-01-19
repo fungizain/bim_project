@@ -9,7 +9,7 @@ MODEL_TYPE = "text-generation"
 env = os.getenv("APP_ENV")
 if env == "prod":
     print("Running in production mode.")
-    LLM_MODEL = "Qwen/Qwen3-8B"
+    LLM_MODEL = "openai/gpt-oss-20b"
 else:
     print("Running in development mode.")
     # LLM_MODEL = "Qwen/Qwen3-0.6B"
