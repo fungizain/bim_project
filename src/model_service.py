@@ -12,8 +12,8 @@ if env == "prod":
     LLM_MODEL = "Qwen/Qwen3-8B"
 else:
     print("Running in development mode.")
-    LLM_MODEL = "Qwen/Qwen3-0.6B"
-    # LLM_MODEL = "google/flan-t5-base"
+    # LLM_MODEL = "Qwen/Qwen3-0.6B"
+    LLM_MODEL = "google/flan-t5-base"
 
 embed_fn = embedding_functions.SentenceTransformerEmbeddingFunction(model_name="all-MiniLM-L6-v2")
 tokenizer = AutoTokenizer.from_pretrained(LLM_MODEL)
