@@ -1,6 +1,6 @@
 import os
 from chromadb.utils import embedding_functions
-from transformers import AutoTokenizer, AutoModelForQuestionAnswering, AutoModelForCausalLM, pipeline
+from transformers import pipeline
 
 EMBED_MODEL = "sentence-transformers/all-mpnet-base-v2"
 MODEL_TYPE = "text-generation"
@@ -16,20 +16,12 @@ else:
     LLM_MODEL = "google/flan-t5-base"
 
 embed_fn = embedding_functions.SentenceTransformerEmbeddingFunction(model_name="all-MiniLM-L6-v2")
-tokenizer = AutoTokenizer.from_pretrained(LLM_MODEL)
-
-auto_model = AutoModelForCausalLM if MODEL_TYPE == "text-generation" else AutoModelForQuestionAnswering
-llm_model = auto_model.from_pretrained(
-    LLM_MODEL,
-    device_map="auto",
-    dtype="auto",
-    trust_remote_code=True
-)
 
 qa_pipeline = pipeline(
     MODEL_TYPE,
-    model=llm_model,
-    tokenizer=tokenizer,
+    model=LLM_MODEL,
+    device_map="auto",
+    dtype="auto",
     return_full_text=False   # 只要答案部分
 )
 
