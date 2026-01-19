@@ -11,16 +11,16 @@ EMBED_MODEL = "sentence-transformers/all-mpnet-base-v2"
 env = os.getenv("APP_ENV")
 if env == "prod":
     print("Running in production mode.")
-    LLM_MODEL = "NousResearch/NousCoder-14B"
+    LLM_MODEL = "nvidia/Nemotron-Orchestrator-8B"
 else:
     print("Running in development mode.")
     # LLM_MODEL = "Qwen/Qwen3-0.6B"
     LLM_MODEL = "google/flan-t5-base"
 
-embed_fn = embedding_functions.SentenceTransformerEmbeddingFunction(model_name="all-MiniLM-L6-v2")
-tokenizer = AutoTokenizer.from_pretrained(LLM_MODEL)
+embedder = embedding_functions.SentenceTransformerEmbeddingFunction(model_name="all-MiniLM-L6-v2")
 
-llm_model = AutoModelForCausalLM.from_pretrained(
+tokenizer = AutoTokenizer.from_pretrained(LLM_MODEL)
+model = AutoModelForCausalLM.from_pretrained(
     LLM_MODEL,
     device_map="auto",
     dtype="auto",
@@ -29,13 +29,13 @@ llm_model = AutoModelForCausalLM.from_pretrained(
 
 qa_pipeline = pipeline(
     "text-generation",
-    model=llm_model,
+    model=model,
     tokenizer=tokenizer,
     return_full_text=False   # 只要答案部分
 )
 
 def get_embedder():
-    return embed_fn
+    return embedder
 
 def get_pipeline():
     return qa_pipeline
