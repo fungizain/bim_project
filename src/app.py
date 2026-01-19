@@ -5,7 +5,7 @@ import gradio as gr
 
 from src.config import reset_folders
 from src.chroma_service import add_to_chroma, delete_chroma_collection, prepare_prompt_from_query
-from src.model_service import MODEL_TYPE, get_pipeline
+from src.model_service import get_pipeline
 from src.pdf_service import process_uploaded_pdf
 
 os.environ["JPYPE_JVM_OPTIONS"] = "--enable-native-access=ALL-UNNAMED"
@@ -55,18 +55,12 @@ def gr_ask(query, prompt_template):
     try:
         prompt, hits = prepare_prompt_from_query(query, prompt_template)
 
-        if MODEL_TYPE == "text-generation":
-            generated_ids = qa_pipeline(
-                prompt,
-                max_new_tokens=128,
-                do_sample=False
-            )
-            answer = generated_ids[0]["generated_text"].strip()
-        else:
-            answer = qa_pipeline(
-                question=query,
-                context=prompt
-            )
+        generated_ids = qa_pipeline(
+            prompt,
+            max_new_tokens=128,
+            do_sample=False
+        )
+        answer = generated_ids[0]["generated_text"].strip()
 
         return answer, hits
     except Exception as e:
