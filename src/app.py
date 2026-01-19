@@ -5,7 +5,7 @@ import gradio as gr
 
 from src.config import reset_folders
 from src.chroma_service import add_to_chroma, delete_chroma_collection, prepare_prompt_from_query
-from src.model_service import get_pipeline
+from src.model_service import MODEL_TYPE, get_pipeline
 from src.pdf_service import process_uploaded_pdf
 
 os.environ["JPYPE_JVM_OPTIONS"] = "--enable-native-access=ALL-UNNAMED"
@@ -19,18 +19,18 @@ You are a precise document QA assistant. Read the provided document context and 
 Follow these rules step by step:
 1. Ensure factual accuracy. Do not hallucinate.
 2. Remove redundant or irrelevant information.
-3. Provide at most 3 candidate answers. Place the most suitable one at the top.
+3. Provide at most 3 unique candidate answers. Place the most suitable one at the top.
 4. If the question specifies a manufacturer and model number, try to match them explicitly.
-5. After each answer, append the exact source location and accuracy percentage in this format:
+5. Do not repeat identical answers from different chunks. Deduplicate before presenting.
+6. After each answer, append the exact source location and accuracy percentage in this format:
    "Answer: <answer>, File: <filename>, Page: <page-range>, Accuracy: <percentage>%"
 
-Question: {query}
 Document Context:
 {context}
-
-Answer:
 """
 
+if MODEL_TYPE == "text-generation":
+    PROMPT_TEMPLATE += "\n---\nQuestion: {query}\nAnswer:"
 
 # ---------------- Gradio UI ----------------
 def gr_upload(files):
@@ -56,19 +56,18 @@ def gr_ask(query, prompt_template):
     try:
         prompt, hits = prepare_prompt_from_query(query, prompt_template)
 
-        generated_ids = qa_pipeline(
-            prompt,
-            max_new_tokens=128,
-            do_sample=False,
-        )
-
-        print(generated_ids)
-        raw = generated_ids[0]["generated_text"].strip()
-
-        # 如果有 regex 可以抽答案，否則直接用 raw
-        # m = re.search(r'"([^"]+)"', raw)
-        # answer = m.group(1) if m else raw
-        answer = raw
+        if MODEL_TYPE == "text-generation":
+            generated_ids = qa_pipeline(
+                prompt,
+                max_new_tokens=128,
+                do_sample=False
+            )
+            answer = generated_ids[0]["generated_text"].strip()
+        else:
+            answer = qa_pipeline(
+                question=query,
+                context=prompt
+            )
 
         return answer, hits
     except Exception as e:
