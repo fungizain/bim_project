@@ -14,8 +14,7 @@ if env == "prod":
     LLM_MODEL = "nvidia/Nemotron-Orchestrator-8B"
 else:
     print("Running in development mode.")
-    # LLM_MODEL = "Qwen/Qwen3-0.6B"
-    LLM_MODEL = "google/flan-t5-base"
+    LLM_MODEL = "Qwen/Qwen3-0.6B"
 
 embedder = embedding_functions.SentenceTransformerEmbeddingFunction(model_name="all-MiniLM-L6-v2")
 

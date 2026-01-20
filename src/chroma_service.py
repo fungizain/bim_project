@@ -37,13 +37,35 @@ def add_to_chroma(chunks: list[Document]):
 def delete_chroma_collection():
     client.delete_collection(name="bim_project")
 
-def prepare_prompt_from_query(query: str, prompt_template: str, k: int = 3):
+def prepare_prompt_from_query(
+        manufacturer: str,
+        model_number: str,
+        query_attr: str,
+        prompt_template: str,
+        k: int = 5
+    ) -> tuple[str, str]:
     collection = get_chroma_collection()
+    
+    query_parts = [manufacturer.strip(), model_number.strip(), query_attr.strip()]
+    query_text = " ".join([q for q in query_parts if q])
+    filters = {}
+    if manufacturer.strip():
+        filters["$contains"] = manufacturer.strip()
+    if model_number.strip():
+        if "$contains" in filters:
+            filters["$and"] = [
+                {"$contains": manufacturer.strip()},
+                {"$contains": model_number.strip()}
+            ]
+            filters.pop("$contains")
+        else:
+            filters["$contains"] = model_number.strip()
+    print(f"Querying ChromaDB with text: {query_text} and filters: {filters}")
+
     results = collection.query(
-        query_texts=[query],
+        query_texts=[query_text],
         n_results=k,
-        # where={"metadata_field": "is_equal_to_this"}, # optional filter
-        # where_document={"$contains":"search_string"}  # optional filter
+        where_document=filters if filters else None,
     )
 
     documents = results["documents"][0]
@@ -58,5 +80,10 @@ def prepare_prompt_from_query(query: str, prompt_template: str, k: int = 3):
         ]
     )
 
-    prompt = prompt_template.format(context=hits, query=query)
+    prompt = prompt_template.format(
+        context=hits, 
+        manufacturer=manufacturer, 
+        model_number=model_number, 
+        query_attr=query_attr
+    )
     return prompt, hits

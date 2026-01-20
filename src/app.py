@@ -18,85 +18,102 @@ You are a precise document QA assistant. Read the provided document context and 
 
 Follow these rules step by step:
 1. Ensure factual accuracy. Do not hallucinate.
-2. Remove redundant or irrelevant information.
-3. Provide at most 3 unique candidate answers. Place the most suitable one at the top.
-4. If the question specifies a manufacturer and model number, try to match them explicitly.
-5. Do not repeat identical answers from different chunks. Deduplicate before presenting.
-6. After each answer, append the exact source location and accuracy percentage in this format:
+2. Provide candidate answers only if they are supported by the context.
+3. Answer in this format:
    "Answer: <answer>, File: <filename>, Page: <page-range>, Accuracy: <percentage>%"
 
-Question: {query}
+Question: For {manufacturer} {model_number}, what is the {query_attr}?
+
 Document Context:
 {context}
+
 Answer:
 """
 
 # ---------------- Gradio UI ----------------
 def gr_upload(files):
     results = []
-    for f in files:
-        with open(f.name, "rb") as fh:
-            upload_file = UploadFile(filename=os.path.basename(f.name), file=fh)
-            documents = process_uploaded_pdf(upload_file)
+    if not files:
+        return "⚠️ No files uploaded"
 
-            if len(documents) > 0:
-                add_to_chroma(documents)
-                results.append(f"✅ Uploaded & Indexed {upload_file.filename}")
-            else:
-                results.append(f"⚠️ Failed {upload_file.filename}")
+    for f in files:
+        try:
+            with open(f.name, "rb") as fh:
+                upload_file = UploadFile(
+                    filename=os.path.basename(f.name),
+                    file=fh
+                )
+                documents = process_uploaded_pdf(upload_file)
+
+                if documents:
+                    add_to_chroma(documents)
+                    results.append(f"✅ Uploaded & Indexed {upload_file.filename}")
+                else:
+                    results.append(f"⚠️ No documents extracted from {upload_file.filename}")
+        except Exception as e:
+            results.append(f"❌ Error processing {f.name}: {e}")
+
     return "\n".join(results)
 
 def gr_reset():
-    reset_result = reset_folders()
-    delete_chroma_collection()
-    return reset_result, ""
-
-def gr_ask(query, prompt_template):
     try:
-        prompt, hits = prepare_prompt_from_query(query, prompt_template)
+        reset_result = reset_folders()
+        delete_chroma_collection()
+        return f"🗑️ Reset done: {reset_result}", ""
+    except Exception as e:
+        return f"❌ Reset failed: {e}", ""
 
-        generated_ids = qa_pipeline(
-            prompt,
-            max_new_tokens=128,
-            do_sample=False
+def gr_ask(manufacturer, model_number, query_attr, prompt_template):
+    try:
+        prompt, hits = prepare_prompt_from_query(
+            manufacturer, model_number, query_attr, prompt_template
         )
-        answer = generated_ids[0]["generated_text"].strip()
-
-        return answer, hits
+        if len(hits) == 0:
+            return "No relevant information found in the documents.", ""
+        else:
+            generated_ids = qa_pipeline(prompt, max_new_tokens=128, do_sample=False)
+            answer = generated_ids[0]["generated_text"].strip()
+            return answer, hits
     except Exception as e:
         return f"Error: {str(e)}", ""
 
 with gr.Blocks() as demo:
-    gr.Markdown("## 📄 PDF QA Demo\nUpload PDFs → Ask Questions → Reset")
+    gr.Markdown("## PDF QA Demo\nUpload PDFs → Query")
     prompt_state = gr.State(PROMPT_TEMPLATE)
 
     with gr.Tab("Upload"):
         pdfs = gr.File(label="Upload PDFs", file_types=[".pdf"], file_count="multiple")
         with gr.Row():
             with gr.Column():
-                upload_btn = gr.Button("📤 Upload")
+                upload_btn = gr.Button("Upload")
                 upload_out = gr.Textbox(label="Upload Result", lines=6)
             with gr.Column():
-                reset_btn = gr.Button("🗑️ Reset")
+                reset_btn = gr.Button("Reset")
                 reset_out = gr.Textbox(label="Reset Status", interactive=False)
-
+    
     with gr.Tab("Ask"):
-        query = gr.Textbox(label="❓ Ask a question", placeholder="Type your question here...")
-        ask_btn = gr.Button("🔍 Submit")
+        manufacturer = gr.Textbox(label="Manufacturer", placeholder="Enter manufacturer name")
+        model_number = gr.Textbox(label="Model Number", placeholder="Enter model number")
+        query_attr   = gr.Textbox(label="Query Attribute", placeholder="Enter attribute to query")
+        ask_btn = gr.Button("Submit")
         answer = gr.Textbox(label="Answer", lines=8)
         hits_box = gr.Textbox(label="Context Hits (Full)", lines=20)
     
     with gr.Tab("Settings"):
         prompt_box = gr.Textbox(label="Prompt Template", value=PROMPT_TEMPLATE, lines=12)
-        save_btn = gr.Button("💾 Save Prompt")
-
+        save_btn = gr.Button("Save Prompt")
+    
     upload_btn.click(gr_upload, inputs=[pdfs], outputs=[upload_out])
     upload_btn.click(lambda: None, inputs=None, outputs=[pdfs])
     reset_btn.click(gr_reset, outputs=[reset_out, upload_out])
+    
+    ask_btn.click(
+        gr_ask,
+        inputs=[manufacturer, model_number, query_attr, prompt_box],
+        outputs=[answer, hits_box]
+    )
 
-    ask_btn.click(gr_ask, inputs=[query, prompt_box], outputs=[answer, hits_box])
     save_btn.click(lambda new: new, inputs=[prompt_box], outputs=[prompt_state])
-
 
 # Mount Gradio UI into FastAPI
 app = gr.mount_gradio_app(app, demo, path="/ui", theme="soft")
