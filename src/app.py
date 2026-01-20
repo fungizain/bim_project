@@ -1,5 +1,4 @@
 import os
-import re
 from fastapi import FastAPI, UploadFile
 import gradio as gr
 
@@ -19,8 +18,11 @@ You are a precise document QA assistant. Read the provided document context and 
 Follow these rules step by step:
 1. Ensure factual accuracy. Do not hallucinate.
 2. Provide candidate answers only if they are supported by the context.
-3. Answer in this format:
+3. Strictly deduplicate answers: if multiple chunks contain the same answer, output it only once.
+4. Return at most 3 unique candidate answers. Place the most suitable one at the top.
+5. Answer in this format:
    "Answer: <answer>, File: <filename>, Page: <page-range>, Accuracy: <percentage>%"
+6. Place a <END> at the end.
 
 Question: For {manufacturer} {model_number}, what is the {query_attr}?
 
@@ -71,8 +73,9 @@ def gr_ask(manufacturer, model_number, query_attr, prompt_template):
         if len(hits) == 0:
             return "No relevant information found in the documents.", ""
         else:
-            generated_ids = qa_pipeline(prompt, max_new_tokens=128, do_sample=False)
-            answer = generated_ids[0]["generated_text"].strip()
+            generated_ids = qa_pipeline(prompt, max_new_tokens=256, do_sample=False)
+            raw_output = generated_ids[0]["generated_text"].strip()
+            answer = raw_output.split("<END>")[0].strip()
             return answer, hits
     except Exception as e:
         return f"Error: {str(e)}", ""
