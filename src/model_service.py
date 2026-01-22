@@ -24,6 +24,7 @@ model = AutoModelForCausalLM.from_pretrained(
     LLM_MODEL,
     device_map="auto",
     dtype="auto",
+    load_in_8bit=True,
     trust_remote_code=True
 )
 
