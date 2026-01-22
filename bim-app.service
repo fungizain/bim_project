@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 WorkingDirectory=/root/bim_project
-ExecStart=/usr/local/bin/poetry run bim-app-prod
+ExecStart=/bin/bash -c '[ -x /root/bim_project/.venv/bin/poetry ] && exec /root/bim_project/.venv/bin/poetry run bim-app-prod || exec /usr/local/bin/poetry run bim-app-prod'
 Restart=always
 RestartSec=5
 
