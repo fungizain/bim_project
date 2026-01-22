@@ -11,7 +11,8 @@ EMBED_MODEL = "sentence-transformers/all-mpnet-base-v2"
 env = os.getenv("APP_ENV")
 if env == "prod":
     print("Running in production mode.")
-    LLM_MODEL = "nvidia/Nemotron-Orchestrator-8B"
+    # LLM_MODEL = "nvidia/Nemotron-Orchestrator-8B"
+    LLM_MODEL = "openai/gpt-oss-20b"
 else:
     print("Running in development mode.")
     LLM_MODEL = "Qwen/Qwen3-0.6B"
