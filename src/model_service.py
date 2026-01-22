@@ -3,7 +3,8 @@ from chromadb.utils import embedding_functions
 from transformers import (
     AutoTokenizer,
     AutoModelForCausalLM,
-    pipeline
+    pipeline,
+    BitsAndBytesConfig
 )
 
 EMBED_MODEL = "sentence-transformers/all-mpnet-base-v2"
@@ -20,11 +21,16 @@ else:
 embedder = embedding_functions.SentenceTransformerEmbeddingFunction(model_name="all-MiniLM-L6-v2")
 
 tokenizer = AutoTokenizer.from_pretrained(LLM_MODEL)
+bnb_config = BitsAndBytesConfig(
+    load_in_8bit=True,
+    bnb_4bit_quant_type="nf4",
+    bnb_4bit_compute_type="float16"
+)
 model = AutoModelForCausalLM.from_pretrained(
     LLM_MODEL,
     device_map="auto",
     dtype="auto",
-    load_in_8bit=True,
+    quantization_config=bnb_config,
     trust_remote_code=True
 )
 
