@@ -177,7 +177,7 @@ def parse_chunk(chunk) -> Document:
 
         if e["type"] == "Table":
             html_text = e["metadata"]["text_as_html"]
-            result.append(html_table_to_markdown_kv(html_text))
+            result.append(html_text)
         elif e["type"] == "Image":
             continue # skip images for now
         else:
