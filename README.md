@@ -35,3 +35,7 @@ sudo systemctl enable cloudflared
 
 apt install poppler-utils -y
 apt install tesseract-ocr -y
+
+# openai MXFP4
+
+need accelerate, kernels and triton>=3.4
