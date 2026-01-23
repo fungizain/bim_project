@@ -49,3 +49,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry.scripts]
 bim-app-dev = "src.main:dev_main"
 bim-app-prod = "src.main:prod_main"
+[dependency-groups]
+dev = [
+    "pytest (>=9.0.2,<10.0.0)"
+]

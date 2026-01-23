@@ -2,8 +2,10 @@ __pycache__/
 *.pyc
 .venv/
 .env
-test*
+test.txt
 assets/
 src/chroma_db/
 src/output_files/
 src/upload_pdfs/
+
+.gradio

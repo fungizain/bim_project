@@ -1,5 +1,6 @@
 import os
-from fastapi import FastAPI, UploadFile
+from fastapi import FastAPI, UploadFile, File, Form
+from fastapi.responses import JSONResponse
 import gradio as gr
 
 from src.config import reset_folders
@@ -32,6 +33,59 @@ Document Context:
 Answer:
 """
 
+# ---------------- FastAPI Endpoints ----------------
+def success_response(data: dict = None, message: str = ""):
+    payload = {"status": "success", "message": message}
+    if data:
+        payload.update(data)
+    return JSONResponse(content=payload, status_code=200)
+
+def error_response(message: str, status_code: int = 500):
+    return JSONResponse(content={"status": "error", "message": message}, status_code=status_code)
+
+@app.post("/upload_pdf")
+async def upload_pdf(file: UploadFile = File(...)):
+    try:
+        documents = process_uploaded_pdf(file)
+        if not documents:
+            return error_response("No documents attached.", status_code=400)
+
+        add_to_chroma(documents)
+        return success_response(message=f"Uploaded & Indexed {file.filename}")
+    except Exception as e:
+        return error_response(str(e), status_code=500)
+    
+@app.post("/ask_question")
+async def ask_question(
+    manufacturer: str = Form(""),
+    model_number: str = Form(""),
+    query_attr: str = Form(...),
+    prompt_template: str = Form(PROMPT_TEMPLATE)
+):
+    try:
+        prompt, hits = prepare_prompt_from_query(
+            manufacturer, model_number, query_attr, prompt_template
+        )
+        if len(hits) == 0:
+            return success_response(data={"answer": "No relevant information found in the documents.", "hits": hits})
+
+        generated_ids = qa_pipeline(prompt, max_new_tokens=256, do_sample=False)
+        raw_output = generated_ids[0]["generated_text"].strip()
+        answer = raw_output.split("<END>")[0].strip()
+
+        return success_response(data={"answer": answer, "hits": hits})
+    except Exception as e:
+        return error_response(str(e), status_code=500)
+    
+@app.post("/reset")
+async def reset():
+    try:
+        reset_result = reset_folders()
+        delete_chroma_collection()
+        return success_response(message=f"Reset done: {reset_result}")
+    except Exception as e:
+        return error_response(str(e), status_code=500)
+
 # ---------------- Gradio UI ----------------
 def gr_upload(files):
     results = []
@@ -49,11 +103,11 @@ def gr_upload(files):
 
                 if documents:
                     add_to_chroma(documents)
-                    results.append(f"✅ Uploaded & Indexed {upload_file.filename}")
+                    results.append(f"Uploaded & Indexed {upload_file.filename}")
                 else:
-                    results.append(f"⚠️ No documents extracted from {upload_file.filename}")
+                    results.append(f"No documents extracted from {upload_file.filename}")
         except Exception as e:
-            results.append(f"❌ Error processing {f.name}: {e}")
+            results.append(f"Error processing {f.name}: {e}")
 
     return "\n".join(results)
 
@@ -61,9 +115,9 @@ def gr_reset():
     try:
         reset_result = reset_folders()
         delete_chroma_collection()
-        return f"🗑️ Reset done: {reset_result}", ""
+        return f"Reset done: {reset_result}", ""
     except Exception as e:
-        return f"❌ Reset failed: {e}", ""
+        return f"Reset failed: {e}", ""
 
 def gr_ask(manufacturer, model_number, query_attr, prompt_template):
     try:
