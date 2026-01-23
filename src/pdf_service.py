@@ -80,7 +80,7 @@ def table_to_matrix(table_tag) -> List[List[str]]:
                 col_idx += 1
             rowspan = int(cell.get("rowspan", 1))
             colspan = int(cell.get("colspan", 1))
-            text = clean_text(cell.get_text(separator=" ", strip=True))
+            text = cell.get_text(separator=" ", strip=True)
             for dr in range(rowspan):
                 target_r = r_idx + dr
                 while len(grid) <= target_r:
@@ -177,7 +177,7 @@ def parse_chunk(chunk) -> Document:
 
         if e["type"] == "Table":
             html_text = e["metadata"]["text_as_html"]
-            result.append(html_text)
+            result.append(html_table_to_markdown_kv(html_text))
         elif e["type"] == "Image":
             continue # skip images for now
         else:
