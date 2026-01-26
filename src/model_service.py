@@ -33,7 +33,7 @@ qa_pipeline = pipeline(
     "text-generation",
     model=model,
     tokenizer=tokenizer,
-    return_full_text=False   # 只要答案部分
+    return_full_text=True
 )
 
 def get_embedder():

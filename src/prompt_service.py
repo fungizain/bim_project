@@ -8,27 +8,25 @@ SYSTEM_PROMPT = """You are a retrieval-augmented assistant. Follow the rules str
 - Do NOT add explanations or commentary.
 """
 
-PROMPT_TEMPLATE = {
-    "messages": [
-        {
-            "role": "system",
-            "content": SYSTEM_PROMPT
-        },
-        {
-            "role": "user",
-            "content": (
-                "context:\n{hits}\n\n"
-                "manufacturer: {manufacturer}\n"
-                "model number: {model_number}\n"
-                "query_attr: {query_attr}"
-            )
-        },
-        {
-            "role": "assistant",
-            "content": "<value> (<confidence>%) [Reference: <source.pdf> page <page> line <line>]"
-        }
-    ]
-}
+PROMPT_TEMPLATE = [
+    {
+        "role": "system",
+        "content": SYSTEM_PROMPT
+    },
+    {
+        "role": "user",
+        "content": (
+            "context:\n{hits}\n\n"
+            "manufacturer: {manufacturer}\n"
+            "model number: {model_number}\n"
+            "query_attr: {query_attr}"
+        )
+    },
+    {
+        "role": "assistant",
+        "content": "<value> (<confidence>%) [Reference: <source.pdf> page <page> line <line>]"
+    }
+]
 
 _session_prompts : Dict[str, str] = {}
 
@@ -57,7 +55,7 @@ def prepare_prompt_with_template(
     system_prompt: str = None
 ):
     system_message = system_prompt or SYSTEM_PROMPT
-    user_message = PROMPT_TEMPLATE["messages"][1]["content"].format(
+    user_message = PROMPT_TEMPLATE[1]["content"].format(
         manufacturer=manufacturer,
         model_number=model_number,
         query_attr=query_attr,
@@ -66,7 +64,7 @@ def prepare_prompt_with_template(
     messages = [
         f"SYSTEM:\n{system_message}",
         f"USER:\n{user_message}",
-        f"ASSISTANT:\n{PROMPT_TEMPLATE['messages'][2]['content']}"
+        f"ASSISTANT:\n{PROMPT_TEMPLATE[2]['content']}"
     ]
     print(f"[DEBUG] Harmony Prompt (system):\n{system_message}")
     prompt_str = "\n\n".join(messages)

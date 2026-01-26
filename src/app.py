@@ -115,7 +115,7 @@ def gr_ask(session_id, manufacturer, model_number, query_attr) -> tuple[str, str
             return "No relevant information found in the documents.", ""
         else:
             prompt = prepare_prompt(session_id, manufacturer, model_number, query_attr, hits)
-            generated_ids = qa_pipeline(prompt, max_new_tokens=256, do_sample=False)
+            generated_ids = qa_pipeline(prompt, max_new_tokens=1024, do_sample=False)
             raw_output = generated_ids[0]["generated_text"].strip()
             answer = raw_output.split("<END>")[0].strip()
             return answer, hits
