@@ -1,6 +1,6 @@
 from transformers import pipeline, AutoTokenizer
 
-model_id = "gpt-oss/gpt-oss-20b"
+model_id = "openai/gpt-oss-20b"
 
 tokenizer = AutoTokenizer.from_pretrained(model_id)
 pipe = pipeline(
