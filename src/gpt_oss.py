@@ -118,7 +118,6 @@ stop_token_ids = encoding.stop_tokens_for_assistant_actions()
 model_id = "openai/gpt-oss-20b"
 tokenizer = AutoTokenizer.from_pretrained(model_id)
 model = GptOssForCausalLM.from_pretrained(
-    "text-generation",
     model=model_id,
     dtype="auto",
     device_map="auto"
