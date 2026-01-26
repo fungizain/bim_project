@@ -14,7 +14,7 @@ messages = [
     {"role": "user", "content": "Tell me a joke."}
 ]
 
-chat_input = tokenizer(messages, tokenize=False, add_generation_prompt=True)
+chat_input = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
 print(chat_input)
 
 outputs = pipe(messages, max_new_tokens=1024)
