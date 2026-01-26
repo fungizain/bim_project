@@ -141,18 +141,17 @@ for token_id in completion_ids:
         break
     displayed_ids.append(token_id)
 
-for token_id in displayed_ids:
-    token = encoding.decode([token_id])
-    print(f"{repr(token):<20} | {token_id:<10}")
-
 parse_ids = [tid for tid in displayed_ids if tid not in stop_token_ids]
 
 try:
     entries = encoding.parse_messages_from_completion_tokens(parse_ids, Role.ASSISTANT)
-    print("\nPARSE MESSAGES:")
+    
+    print("\nPARSED MESSAGES:")
     print("-" * 40)
     for message in entries:
-        print(json.dump(message.to_dict(), indent=2))
+        print(json.dumps(message.to_dict(), indent=2))
         print("-" * 40)
 except Exception as e:
-    print(f"\nError parsing message: {e}")
+    print(f"\nError parsing messages: {e}")
+    print("\nRaw decoded output:")
+    print(encoding.decode(parse_ids))
