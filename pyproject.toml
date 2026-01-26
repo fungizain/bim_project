@@ -24,7 +24,8 @@ dependencies = [
     "chromadb (>=1.4.1,<2.0.0)",
     "accelerate (>=1.12.0,<2.0.0)",
     "kernels (>=0.11.7,<0.12.0)",
-    "triton (>=3.4) ; sys_platform == 'linux'"
+    "triton (>=3.4) ; sys_platform == 'linux'",
+    "openai-harmony (>=0.0.8,<0.0.9)"
 ]
 
 [tool.poetry]
