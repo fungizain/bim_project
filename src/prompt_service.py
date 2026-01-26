@@ -25,10 +25,7 @@ PROMPT_TEMPLATE = {
         },
         {
             "role": "assistant",
-            "content": (
-                "We need to answer in the following format:\n"
-                "<value> (<confidence>%) [Reference: <source.pdf> page <page> line <line>]"
-            )
+            "content": "<value> (<confidence>%) [Reference: <source.pdf> page <page> line <line>]"
         }
     ]
 }
@@ -67,13 +64,13 @@ def prepare_prompt_with_template(
         hits=hits
     )
     messages = [
-        f"DEVELOPER:\n{system_message}",
+        f"SYSTEM:\n{system_message}",
         f"USER:\n{user_message}",
-        f"ASSISTANT (format example):\n{PROMPT_TEMPLATE['messages'][2]['content']}"
+        f"ASSISTANT:\n{PROMPT_TEMPLATE['messages'][2]['content']}"
     ]
     print(f"[DEBUG] Harmony Prompt (system):\n{system_message}")
     prompt_str = "\n\n".join(messages)
-    return messages
+    return prompt_str
 
 def prepare_prompt(
         session_id: str,
