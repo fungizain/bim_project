@@ -7,13 +7,12 @@ SYSTEM_PROMPT = """You are a retrieval-augmented assistant. Follow the rules str
 - Match Manufacturer and Model Number if provided.
 - Return up to 3 candidate answers.
 - Do NOT add explanations or commentary.
-- Format strictly as: <value> (<confidence>%) [Reference: <source.pdf> page <page> line <line>]
 """
 
 PROMPT_TEMPLATE = {
     "messages": [
         {
-            "role": "system",
+            "role": "developer",
             "content": SYSTEM_PROMPT
         },
         {
@@ -28,8 +27,7 @@ PROMPT_TEMPLATE = {
         {
             "role": "assistant",
             "content": (
-                "<value> (<confidence>%) [Reference: <source.pdf> page <page> line <line>]\n"
-                "<value> (<confidence>%) [Reference: <source.pdf> page <page> line <line>]\n"
+                "We need to answer in the following format:\n"
                 "<value> (<confidence>%) [Reference: <source.pdf> page <page> line <line>]"
             )
         }
@@ -70,7 +68,7 @@ def prepare_prompt_with_template(
         hits=hits
     )
     messages = [
-        f"SYSTEM:\n{system_message}",
+        f"DEVELOPER:\n{system_message}",
         f"USER:\n{user_message}",
         f"ASSISTANT (format example):\n{PROMPT_TEMPLATE['messages'][2]['content']}"
     ]
