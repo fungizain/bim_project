@@ -4,44 +4,32 @@ from fastapi.responses import JSONResponse
 import gradio as gr
 
 from src.config import reset_folders
-from src.chroma_service import add_to_chroma, delete_chroma_collection, prepare_prompt_from_query
+from src.chroma_service import add_to_chroma, delete_chroma_collection, query_chroma
 from src.model_service import get_pipeline
 from src.pdf_service import process_uploaded_pdf
+from src.prompt_service import (
+    create_session,
+    change_prompt_template,
+    get_prompt_template,
+    prepare_prompt,
+    prepare_prompt_with_template
+)
 
 os.environ["JPYPE_JVM_OPTIONS"] = "--enable-native-access=ALL-UNNAMED"
 
 app = FastAPI()
 qa_pipeline = get_pipeline()
 
-PROMPT_TEMPLATE = """
-You are a precise document QA assistant. Read the provided document context and answer the question.
-
-Follow these rules step by step:
-1. Ensure factual accuracy. Do not hallucinate.
-2. Provide candidate answers only if they are supported by the context.
-3. Strictly deduplicate answers: if multiple chunks contain the same answer, output it only once.
-4. Return at most 3 unique candidate answers. Place the most suitable one at the top.
-5. Answer in this format:
-   "Answer: <answer>, File: <filename>, Page: <page-range>, Accuracy: <percentage>%"
-6. Place a <END> at the end.
-
-Question: For {manufacturer} {model_number}, what is the {query_attr}?
-
-Document Context:
-{context}
-
-Answer:
-"""
-
 # ---------------- FastAPI Endpoints ----------------
-def success_response(data: dict = None, message: str = ""):
-    payload = {"status": "success", "message": message}
+def success_response(msg: str, data: dict = None):
+    detail = [{"msg": msg, "type": "success"}]
     if data:
-        payload.update(data)
-    return JSONResponse(content=payload, status_code=200)
+        detail[0]["data"] = data
+    return JSONResponse(content={"detail": detail}, status_code=200)
 
-def error_response(message: str, status_code: int = 500):
-    return JSONResponse(content={"status": "error", "message": message}, status_code=status_code)
+def error_response(message: str, status_code: int = 400):
+    detail = [{"msg": message, "type": "error"}]
+    return JSONResponse(content={"detail": detail}, status_code=status_code)
 
 @app.post("/upload_pdf")
 async def upload_pdf(file: UploadFile = File(...)):
@@ -51,7 +39,7 @@ async def upload_pdf(file: UploadFile = File(...)):
             return error_response("No documents attached.", status_code=400)
 
         add_to_chroma(documents)
-        return success_response(message=f"Uploaded & Indexed {file.filename}")
+        return success_response(msg=f"Uploaded & Indexed {file.filename}")
     except Exception as e:
         return error_response(str(e), status_code=500)
     
@@ -60,15 +48,16 @@ async def ask_question(
     manufacturer: str = Form(""),
     model_number: str = Form(""),
     query_attr: str = Form(...),
-    prompt_template: str = Form(PROMPT_TEMPLATE)
+    prompt_template: str = Form(None)
 ):
     try:
-        prompt, hits = prepare_prompt_from_query(
-            manufacturer, model_number, query_attr, prompt_template
-        )
+        hits = query_chroma(manufacturer, model_number, query_attr)
         if len(hits) == 0:
             return success_response(data={"answer": "No relevant information found in the documents.", "hits": hits})
-
+        
+        prompt = prepare_prompt_with_template(
+            manufacturer, model_number, query_attr, hits, prompt_template
+        )
         generated_ids = qa_pipeline(prompt, max_new_tokens=256, do_sample=False)
         raw_output = generated_ids[0]["generated_text"].strip()
         answer = raw_output.split("<END>")[0].strip()
@@ -82,15 +71,15 @@ async def reset():
     try:
         reset_result = reset_folders()
         delete_chroma_collection()
-        return success_response(message=f"Reset done: {reset_result}")
+        return success_response(msg=f"Reset done: {reset_result}")
     except Exception as e:
         return error_response(str(e), status_code=500)
 
 # ---------------- Gradio UI ----------------
-def gr_upload(files):
+def gr_upload(files) -> tuple[str, None]:
     results = []
     if not files:
-        return "⚠️ No files uploaded"
+        return "⚠️ No files uploaded", None
 
     for f in files:
         try:
@@ -109,9 +98,9 @@ def gr_upload(files):
         except Exception as e:
             results.append(f"Error processing {f.name}: {e}")
 
-    return "\n".join(results)
+    return "\n".join(results), None
 
-def gr_reset():
+def gr_reset() -> tuple[str, str]:
     try:
         reset_result = reset_folders()
         delete_chroma_collection()
@@ -119,14 +108,13 @@ def gr_reset():
     except Exception as e:
         return f"Reset failed: {e}", ""
 
-def gr_ask(manufacturer, model_number, query_attr, prompt_template):
+def gr_ask(session_id, manufacturer, model_number, query_attr) -> tuple[str, str]:
     try:
-        prompt, hits = prepare_prompt_from_query(
-            manufacturer, model_number, query_attr, prompt_template
-        )
+        hits = query_chroma(manufacturer, model_number, query_attr)
         if len(hits) == 0:
             return "No relevant information found in the documents.", ""
         else:
+            prompt = prepare_prompt(session_id, manufacturer, model_number, query_attr, hits)
             generated_ids = qa_pipeline(prompt, max_new_tokens=256, do_sample=False)
             raw_output = generated_ids[0]["generated_text"].strip()
             answer = raw_output.split("<END>")[0].strip()
@@ -134,9 +122,13 @@ def gr_ask(manufacturer, model_number, query_attr, prompt_template):
     except Exception as e:
         return f"Error: {str(e)}", ""
 
+def gr_update_prompt(session_id, new_prompt) -> str:
+    change_prompt_template(session_id, new_prompt)
+    return new_prompt
+
 with gr.Blocks() as demo:
     gr.Markdown("## PDF QA Demo\nUpload PDFs → Query")
-    prompt_state = gr.State(PROMPT_TEMPLATE)
+    prompt_state = gr.State(create_session())
 
     with gr.Tab("Upload"):
         pdfs = gr.File(label="Upload PDFs", file_types=[".pdf"], file_count="multiple")
@@ -151,26 +143,29 @@ with gr.Blocks() as demo:
     with gr.Tab("Ask"):
         manufacturer = gr.Textbox(label="Manufacturer", placeholder="Enter manufacturer name")
         model_number = gr.Textbox(label="Model Number", placeholder="Enter model number")
-        query_attr   = gr.Textbox(label="Query Attribute", placeholder="Enter attribute to query")
+        query_attr   = gr.Textbox(label="Query", placeholder="Enter attribute to query")
         ask_btn = gr.Button("Submit")
         answer = gr.Textbox(label="Answer", lines=8)
         hits_box = gr.Textbox(label="Context Hits (Full)", lines=20)
     
     with gr.Tab("Settings"):
-        prompt_box = gr.Textbox(label="Prompt Template", value=PROMPT_TEMPLATE, lines=12)
+        prompt_box = gr.Textbox(
+            label="Prompt Template", value=get_prompt_template(prompt_state), lines=12
+        )
         save_btn = gr.Button("Save Prompt")
     
-    upload_btn.click(gr_upload, inputs=[pdfs], outputs=[upload_out])
-    upload_btn.click(lambda: None, inputs=None, outputs=[pdfs])
+    upload_btn.click(gr_upload, inputs=[pdfs], outputs=[upload_out, pdfs])
     reset_btn.click(gr_reset, outputs=[reset_out, upload_out])
-    
     ask_btn.click(
         gr_ask,
-        inputs=[manufacturer, model_number, query_attr, prompt_box],
+        inputs=[prompt_state, manufacturer, model_number, query_attr],
         outputs=[answer, hits_box]
     )
-
-    save_btn.click(lambda new: new, inputs=[prompt_box], outputs=[prompt_state])
+    save_btn.click(
+        gr_update_prompt,
+        inputs=[prompt_state, prompt_box],
+        outputs=[prompt_box]
+    )
 
 # Mount Gradio UI into FastAPI
 app = gr.mount_gradio_app(app, demo, path="/ui", theme="soft")

@@ -37,13 +37,7 @@ def add_to_chroma(chunks: list[Document]):
 def delete_chroma_collection():
     client.delete_collection(name="bim_project")
 
-def prepare_prompt_from_query(
-        manufacturer: str,
-        model_number: str,
-        query_attr: str,
-        prompt_template: str,
-        k: int = 5
-    ) -> tuple[str, str]:
+def query_chroma(manufacturer: str, model_number: str, query_attr: str, k: int = 5) -> str:
     collection = get_chroma_collection()
     
     query_parts = [manufacturer.strip(), model_number.strip(), query_attr.strip()]
@@ -80,10 +74,4 @@ def prepare_prompt_from_query(
         ]
     )
 
-    prompt = prompt_template.format(
-        context=hits, 
-        manufacturer=manufacturer, 
-        model_number=model_number, 
-        query_attr=query_attr
-    )
-    return prompt, hits
+    return hits
