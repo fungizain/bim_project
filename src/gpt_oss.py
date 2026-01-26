@@ -2,14 +2,12 @@ import json
 import torch
 from transformers import pipeline, AutoTokenizer, GptOssForCausalLM
 from openai_harmony import (
-    Author,
     Conversation,
     DeveloperContent,
     HarmonyEncodingName,
     Message,
     Role,
     SystemContent,
-    ToolDescription,
     load_harmony_encoding,
     ReasoningEffort
 )
@@ -92,6 +90,7 @@ Attribute Values
 Year of Installation
 2004
 Page 3 of 3"""
+attribute = "Equipment Description"
 
 encoding = load_harmony_encoding(HarmonyEncodingName.HARMONY_GPT_OSS)
 system_message = (
@@ -106,11 +105,15 @@ system_message = (
 )
 developer_message = (
     DeveloperContent.new()
-        .with_instructions("Answer in pirate speak")
+        .with_instructions(
+            f"Read the document content, extract the value of the attribute '{attribute}', "
+            f"and answer strictly in the format: value [Ref: filename]"
+        )
 )
 convo = Conversation.from_messages([
     Message.from_role_and_content(Role.SYSTEM, system_message),
-    Message.from_role_and_content(Role.USER, "hello")
+    Message.from_role_and_content(Role.DEVELOPER, developer_message),
+    Message.from_role_and_content(Role.USER, context)
 ])
 prefill_ids = encoding.render_conversation_for_completion(convo, Role.ASSISTANT)
 stop_token_ids = encoding.stop_tokens_for_assistant_actions()
