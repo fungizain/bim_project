@@ -1,6 +1,5 @@
 from typing import Dict
 from uuid import uuid4
-import pprint
 
 SYSTEM_PROMPT = """You are a retrieval-augmented assistant. Follow the rules strictly:
 - Extract the most relevant values for the target attribute.
@@ -12,7 +11,7 @@ SYSTEM_PROMPT = """You are a retrieval-augmented assistant. Follow the rules str
 PROMPT_TEMPLATE = {
     "messages": [
         {
-            "role": "developer",
+            "role": "system",
             "content": SYSTEM_PROMPT
         },
         {
@@ -59,7 +58,7 @@ def prepare_prompt_with_template(
     query_attr: str,
     hits: str,
     system_prompt: str = None
-) -> str:
+):
     system_message = system_prompt or SYSTEM_PROMPT
     user_message = PROMPT_TEMPLATE["messages"][1]["content"].format(
         manufacturer=manufacturer,
@@ -74,7 +73,7 @@ def prepare_prompt_with_template(
     ]
     print(f"[DEBUG] Harmony Prompt (system):\n{system_message}")
     prompt_str = "\n\n".join(messages)
-    return prompt_str
+    return messages
 
 def prepare_prompt(
         session_id: str,
@@ -82,7 +81,7 @@ def prepare_prompt(
         model_number: str,
         query_attr: str,
         hits: str
-    ) -> dict:
+):
     template = get_system_prompt(session_id)
     print(f"[DEBUG] Prepared prompt for session {session_id}")
     prompt = prepare_prompt_with_template(
