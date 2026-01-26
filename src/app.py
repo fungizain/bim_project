@@ -9,8 +9,8 @@ from src.model_service import get_pipeline
 from src.pdf_service import process_uploaded_pdf
 from src.prompt_service import (
     create_session,
-    change_prompt_template,
-    get_prompt_template,
+    change_system_template,
+    get_system_prompt,
     prepare_prompt,
     prepare_prompt_with_template
 )
@@ -123,7 +123,7 @@ def gr_ask(session_id, manufacturer, model_number, query_attr) -> tuple[str, str
         return f"Error: {str(e)}", ""
 
 def gr_update_prompt(session_id, new_prompt) -> str:
-    change_prompt_template(session_id, new_prompt)
+    change_system_template(session_id, new_prompt)
     return new_prompt
 
 with gr.Blocks() as demo:
@@ -150,7 +150,7 @@ with gr.Blocks() as demo:
     
     with gr.Tab("Settings"):
         prompt_box = gr.Textbox(
-            label="Prompt Template", value=get_prompt_template(prompt_state), lines=12
+            label="Prompt Template", value=get_system_prompt(prompt_state), lines=12
         )
         save_btn = gr.Button("Save Prompt")
     
