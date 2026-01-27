@@ -80,6 +80,7 @@ def prepare_convo(
         ints.append(f"Ensure the answer matches manufacturer '{manufacturer}'.")
     elif model_number:
         ints.append(f"Ensure the answer matches model number '{model_number}'.")
+    ints.append("Return up to 3 candidate answers only.")
     ints.append("Answer strictly in the format: <value> (<confidence>%) [Ref: <filename> page <page> line <line>]")
     developer_message = (DeveloperContent.new().with_instructions(" ".join(ints)))
 
