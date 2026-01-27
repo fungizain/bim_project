@@ -67,19 +67,19 @@ def prepare_convo(
     system_message = (
     SystemContent.new()
         .with_model_identity("You are a retrieval-augmented assistant.")
-        .with_reasoning_effort(ReasoningEffort.MEDIUM)
+        .with_reasoning_effort(ReasoningEffort.LOW)
         .with_conversation_start_date("2026-01-26")
         .with_knowledge_cutoff("2024-06")
         .with_required_channels(["final"])
     )
 
-    ints = [f"Read the document content (up to 5 chunks provided), extract the value of the attribute '{query_attr}'."]
+    ints = [f"Read the document content (up to 5 chunks provided), extract the value of the attribute {query_attr}."]
     if manufacturer and model_number:
-        ints.append(f"Ensure the answer matches manufacturer '{manufacturer}' and model number '{model_number}'.")
+        ints.append(f"Ensure the answer matches manufacturer {manufacturer} and model number {model_number}.")
     elif manufacturer:
-        ints.append(f"Ensure the answer matches manufacturer '{manufacturer}'.")
+        ints.append(f"Ensure the answer matches manufacturer {manufacturer}.")
     elif model_number:
-        ints.append(f"Ensure the answer matches model number '{model_number}'.")
+        ints.append(f"Ensure the answer matches model number {model_number}.")
     ints.append(
         "Return up to 5 candidate answers only, even if more values are found. "
         "Sort answers by confidence level from highest to lowest. "
@@ -105,7 +105,7 @@ def model_predict(manufacturer: str, model_number: str, query_attr: str, hits: s
         input_ids = torch.tensor([prefill_ids], device=device)
         outputs = model.generate(
             input_ids=input_ids,
-            max_new_tokens=1024,
+            max_new_tokens=256,
             eos_token_id=stop_token_ids
         )
         completion_ids = outputs[0][len(prefill_ids):].cpu().tolist()
