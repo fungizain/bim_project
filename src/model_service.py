@@ -73,15 +73,19 @@ def prepare_convo(
         .with_required_channels(["final"])
     )
 
-    ints = [f"Read the document content (up to 5 chunk provided), extract the value of the attribute '{query_attr}'."]
+    ints = [f"Read the document content (up to 5 chunks provided), extract the value of the attribute '{query_attr}'."]
     if manufacturer and model_number:
         ints.append(f"Ensure the answer matches manufacturer '{manufacturer}' and model number '{model_number}'.")
     elif manufacturer:
         ints.append(f"Ensure the answer matches manufacturer '{manufacturer}'.")
     elif model_number:
         ints.append(f"Ensure the answer matches model number '{model_number}'.")
-    ints.append("Return up to 5 candidate answers only, even if more values are found.")
-    ints.append("Each answer must reference the chunk source: <value> (<confidence>%) [Ref: <filename> page <page> line <line>]")
+    ints.append(
+        "Return up to 5 candidate answers only, even if more values are found. "
+        "Sort answers by confidence level from highest to lowest. "
+        "Each answer must be formatted strictly as:\n"
+        "- <value> (<confidence>%) [Ref: <filename> page <page> line <line>]"
+    )
     developer_message = (DeveloperContent.new().with_instructions(" ".join(ints)))
 
     convo = Conversation.from_messages([
