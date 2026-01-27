@@ -107,7 +107,8 @@ developer_message = (
     DeveloperContent.new()
         .with_instructions(
             f"Read the document content, extract the value of the attribute '{attribute}', "
-            f"and answer strictly in the format: value [Ref: filename]"
+            f"and answer strictly in the format: "
+            "<value> (<confidence>%) [Ref: <filename> page <page> line <line>]"
         )
 )
 convo = Conversation.from_messages([

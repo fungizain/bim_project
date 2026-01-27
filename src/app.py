@@ -5,20 +5,12 @@ import gradio as gr
 
 from src.config import reset_folders
 from src.chroma_service import add_to_chroma, delete_chroma_collection, query_chroma
-from src.model_service import get_pipeline
+from src.model_service import model_predict
 from src.pdf_service import process_uploaded_pdf
-from src.prompt_service import (
-    create_session,
-    change_system_template,
-    get_system_prompt,
-    prepare_prompt,
-    prepare_prompt_with_template
-)
 
 os.environ["JPYPE_JVM_OPTIONS"] = "--enable-native-access=ALL-UNNAMED"
 
 app = FastAPI()
-qa_pipeline = get_pipeline()
 
 # ---------------- FastAPI Endpoints ----------------
 def success_response(msg: str, data: dict = None):
@@ -48,20 +40,13 @@ async def ask_question(
     manufacturer: str = Form(""),
     model_number: str = Form(""),
     query_attr: str = Form(...),
-    prompt_template: str = Form(None)
 ):
     try:
         hits = query_chroma(manufacturer, model_number, query_attr)
         if len(hits) == 0:
             return success_response(data={"answer": "No relevant information found in the documents.", "hits": hits})
         
-        prompt = prepare_prompt_with_template(
-            manufacturer, model_number, query_attr, hits, prompt_template
-        )
-        generated_ids = qa_pipeline(prompt, max_new_tokens=256, do_sample=False)
-        raw_output = generated_ids[0]["generated_text"].strip()
-        answer = raw_output.split("<END>")[0].strip()
-
+        answer = model_predict(manufacturer, model_number, query_attr, hits)
         return success_response(data={"answer": answer, "hits": hits})
     except Exception as e:
         return error_response(str(e), status_code=500)
@@ -108,27 +93,19 @@ def gr_reset() -> tuple[str, str]:
     except Exception as e:
         return f"Reset failed: {e}", ""
 
-def gr_ask(session_id, manufacturer, model_number, query_attr) -> tuple[str, str]:
+def gr_ask(manufacturer, model_number, query_attr) -> tuple[str, str]:
     try:
         hits = query_chroma(manufacturer, model_number, query_attr)
         if len(hits) == 0:
             return "No relevant information found in the documents.", ""
-        else:
-            prompt = prepare_prompt(session_id, manufacturer, model_number, query_attr, hits)
-            generated_ids = qa_pipeline(prompt, max_new_tokens=1024, do_sample=False)
-            raw_output = generated_ids[0]["generated_text"].strip()
-            answer = raw_output.split("<END>")[0].strip()
-            return answer, hits
+
+        answer = model_predict(manufacturer, model_number, query_attr, hits)
+        return answer, hits
     except Exception as e:
         return f"Error: {str(e)}", ""
 
-def gr_update_prompt(session_id, new_prompt) -> str:
-    change_system_template(session_id, new_prompt)
-    return new_prompt
-
 with gr.Blocks() as demo:
     gr.Markdown("## PDF QA Demo\nUpload PDFs → Query")
-    prompt_state = gr.State(create_session())
 
     with gr.Tab("Upload"):
         pdfs = gr.File(label="Upload PDFs", file_types=[".pdf"], file_count="multiple")
@@ -147,24 +124,13 @@ with gr.Blocks() as demo:
         ask_btn = gr.Button("Submit")
         answer = gr.Textbox(label="Answer", lines=8)
         hits_box = gr.Textbox(label="Context Hits (Full)", lines=20)
-    
-    with gr.Tab("Settings"):
-        prompt_box = gr.Textbox(
-            label="Prompt Template", value=get_system_prompt(prompt_state), lines=12
-        )
-        save_btn = gr.Button("Save Prompt")
-    
+        
     upload_btn.click(gr_upload, inputs=[pdfs], outputs=[upload_out, pdfs])
     reset_btn.click(gr_reset, outputs=[reset_out, upload_out])
     ask_btn.click(
         gr_ask,
-        inputs=[prompt_state, manufacturer, model_number, query_attr],
+        inputs=[manufacturer, model_number, query_attr],
         outputs=[answer, hits_box]
-    )
-    save_btn.click(
-        gr_update_prompt,
-        inputs=[prompt_state, prompt_box],
-        outputs=[prompt_box]
     )
 
 # Mount Gradio UI into FastAPI
