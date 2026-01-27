@@ -108,7 +108,7 @@ def model_predict(manufacturer: str, model_number: str, query_attr: str, hits: s
 
         final_msg = [msg for msg in parsed if msg.channel == "final"]
         if final_msg:
-            return final_msg.content[0].text
+            return final_msg[-1].content[0].text
         return "No final message found"
     except Exception as e:
         return f"Something went wrong :( Error: {e}"
