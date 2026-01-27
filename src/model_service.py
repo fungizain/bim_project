@@ -111,5 +111,4 @@ def model_predict(manufacturer: str, model_number: str, query_attr: str, hits: s
             return final_msg.content[0].text
         return "No final message found"
     except Exception as e:
-        print(f"Error: {e}")
-        return "Something went wrong :("
+        return f"Something went wrong :( Error: {e}"
