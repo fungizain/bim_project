@@ -1,5 +1,4 @@
 import os
-from typing import List
 from chromadb.utils import embedding_functions
 from openai_harmony import (
     Conversation,
@@ -92,17 +91,25 @@ def prepare_convo(
     return convo
 
 def model_predict(manufacturer: str, model_number: str, query_attr: str, hits: str) -> str:
-    convo = prepare_convo(manufacturer, model_number, query_attr, hits)
-    prefill_ids = enc.render_conversation_for_completion(convo, Role.ASSISTANT)
-    stop_token_ids = enc.stop_tokens_for_assistant_actions()
+    try:
+        convo = prepare_convo(manufacturer, model_number, query_attr, hits)
+        prefill_ids = enc.render_conversation_for_completion(convo, Role.ASSISTANT)
+        stop_token_ids = enc.stop_tokens_for_assistant_actions()
 
-    device = next(model.parameters()).device
-    input_ids = torch.tensor([prefill_ids], device=device)
-    outputs = model.generate(
-        input_ids=input_ids,
-        max_new_tokens=1024,
-        eos_token_id=stop_token_ids
-    )
-    completion_ids = outputs[0][len(prefill_ids):].cpu().tolist()
-    parsed = enc.parse_messages_from_completion_tokens(completion_ids, Role.ASSISTANT)
-    return str(parsed)
+        device = next(model.parameters()).device
+        input_ids = torch.tensor([prefill_ids], device=device)
+        outputs = model.generate(
+            input_ids=input_ids,
+            max_new_tokens=1024,
+            eos_token_id=stop_token_ids
+        )
+        completion_ids = outputs[0][len(prefill_ids):].cpu().tolist()
+        parsed = enc.parse_messages_from_completion_tokens(completion_ids, Role.ASSISTANT)
+
+        final_msg = [msg for msg in parsed if msg.channel == "final"]
+        if final_msg:
+            return final_msg.content[0].text
+        return "No final message found"
+    except Exception as e:
+        print(f"Error: {e}")
+        return "Something went wrong :("
