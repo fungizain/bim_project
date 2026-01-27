@@ -13,14 +13,16 @@ os.environ["JPYPE_JVM_OPTIONS"] = "--enable-native-access=ALL-UNNAMED"
 app = FastAPI()
 
 # ---------------- FastAPI Endpoints ----------------
-def success_response(msg: str, data: dict = None):
-    detail = [{"msg": msg, "type": "success"}]
+def success_response(msg: str = None, data: dict = None):
+    detail = [{"type": "success"}]
+    if msg:
+        detail[0]["msg"] = msg
     if data:
         detail[0]["data"] = data
     return JSONResponse(content={"detail": detail}, status_code=200)
 
-def error_response(message: str, status_code: int = 400):
-    detail = [{"msg": message, "type": "error"}]
+def error_response(msg: str, status_code: int = 400):
+    detail = [{"msg": msg, "type": "error"}]
     return JSONResponse(content={"detail": detail}, status_code=status_code)
 
 @app.post("/upload_pdf")
