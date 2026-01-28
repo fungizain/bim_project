@@ -73,11 +73,12 @@ def prepare_convo(
         .with_required_channels(["final"])
     )
 
-    task_ins = f"""Task:
-    - Read the document content (up to 5 chunks provided).
-    - Extract the value of the attribute {query_attr}.
-    - If multiple possible answers exist, return up to 5 values only.
-    """
+    task_ins = (
+        "Task:\n"
+        "- Read the document content (up to 5 chunks provided).\n"
+        f"- Extract the value of the attribute {query_attr} from each relevant chunk.\n"
+        "- If multiple possible answers exist, return all unique values found, up to 5 in total.\n"
+    )
 
     constraints_ins = "Constraints:\n"
     if manufacturer and model_number:
@@ -87,14 +88,17 @@ def prepare_convo(
     elif model_number:
         constraints_ins += f"- Ensure the answer matches model number {model_number}.\n"
     constraints_ins += (
-        "- Do not return duplicate answers.\n"
+        "- Check each chunk individually and extract candidate values.\n"
+        "- Do not skip chunks even if one answer seems highly confident.\n"
+        "- Absolutely do not return duplicate answers.\n"
         "- Sort answers by confidence level from highest to lowest.\n"
     )
 
-    output_ins = """Output Format:
-    - Each answer must be formatted strictly as:
-    - <value> (<confidence>%) [Ref: <filename> page <page> line <line>]
-    """
+    output_ins = (
+        "Output Format:\n"
+        "- Each answer must be formatted strictly as:\n"
+        "<order> <value> (<confidence>%) [Ref: <filename> page <page> line <line>]"
+    )
     instructions = "\n".join([task_ins, constraints_ins, output_ins])
     developer_message = DeveloperContent.new().with_instructions(instructions)
 
