@@ -44,16 +44,16 @@ def query_chroma(manufacturer: str, model_number: str, query_attr: str, k: int =
     query_text = " ".join([q for q in query_parts if q])
     filters = {}
     if manufacturer.strip():
-        filters["$contains"] = manufacturer.strip()
+        filters["$regex"] = f"(?i){manufacturer.strip()}"
     if model_number.strip():
-        if "$contains" in filters:
+        if "$regex" in filters:
             filters["$and"] = [
-                {"$contains": manufacturer.strip()},
-                {"$contains": model_number.strip()}
+                {"$regex": f"(?i){manufacturer.strip()}"},
+                {"$regex": f"(?i){model_number.strip()}"}
             ]
-            filters.pop("$contains")
+            filters.pop("$regex")
         else:
-            filters["$contains"] = model_number.strip()
+            filters["$regex"] = f"(?i){model_number.strip()}"
     print(f"Querying ChromaDB with text: {query_text} and filters: {filters}")
 
     results = collection.query(
