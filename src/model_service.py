@@ -73,20 +73,30 @@ def prepare_convo(
         .with_required_channels(["final"])
     )
 
-    ints = [f"Read the document content (up to 5 chunks provided), extract the value of the attribute {query_attr}."]
+    task_ins = f"""Task:
+    - Read the document content (up to 5 chunks provided).
+    - Extract the value of the attribute {query_attr}.
+    - If multiple possible answers exist, return up to 5 values only.
+    """
+
+    constraints_ins = "Constraints:\n"
     if manufacturer and model_number:
-        ints.append(f"Ensure the answer matches manufacturer {manufacturer} and model number {model_number}.")
+        constraints_ins += f"- Ensure the answer matches manufacturer {manufacturer} and model number {model_number}.\n"
     elif manufacturer:
-        ints.append(f"Ensure the answer matches manufacturer {manufacturer}.")
+        constraints_ins += f"- Ensure the answer matches manufacturer {manufacturer}.\n"
     elif model_number:
-        ints.append(f"Ensure the answer matches model number {model_number}.")
-    ints.append(
-        "Return up to 5 candidate answers only, even if more values are found. "
-        "Sort answers by confidence level from highest to lowest. "
-        "Each answer must be formatted strictly as:\n"
-        "- <value> (<confidence>%) [Ref: <filename> page <page> line <line>]"
+        constraints_ins += f"- Ensure the answer matches model number {model_number}.\n"
+    constraints_ins += (
+        "- Do not return duplicate answers.\n"
+        "- Sort answers by confidence level from highest to lowest.\n"
     )
-    developer_message = (DeveloperContent.new().with_instructions(" ".join(ints)))
+
+    output_ins = """Output Format:
+    - Each answer must be formatted strictly as:
+    - <value> (<confidence>%) [Ref: <filename> page <page> line <line>]
+    """
+    instructions = "\n".join([task_ins, constraints_ins, output_ins])
+    developer_message = DeveloperContent.new().with_instructions(instructions)
 
     convo = Conversation.from_messages([
         Message.from_role_and_content(Role.SYSTEM, system_message),
