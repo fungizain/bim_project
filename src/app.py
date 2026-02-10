@@ -108,10 +108,10 @@ def gr_ask(manufacturer, model_number, query_attr) -> tuple[str, str]:
         return f"Error: {str(e)}", ""
 
 with gr.Blocks() as demo:
-    gr.Markdown("## PDF QA Demo\nUpload PDFs → Query")
+    gr.Markdown("## PDF QA Demo\nUpload files → Query")
 
     with gr.Tab("Upload"):
-        pdfs = gr.File(label="Upload PDFs", file_types=[".pdf"], file_count="multiple")
+        files = gr.File(label="Upload Files", file_types=None, file_count="multiple")
         with gr.Row():
             with gr.Column():
                 upload_btn = gr.Button("Upload")
@@ -128,7 +128,7 @@ with gr.Blocks() as demo:
         answer = gr.Textbox(label="Answer", lines=8)
         hits_box = gr.Textbox(label="Context Hits (Full)", lines=20)
         
-    upload_btn.click(gr_upload, inputs=[pdfs], outputs=[upload_out, pdfs])
+    upload_btn.click(gr_upload, inputs=[files], outputs=[upload_out, files])
     reset_btn.click(gr_reset, outputs=[reset_out, upload_out])
     ask_btn.click(
         gr_ask,
