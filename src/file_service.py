@@ -39,7 +39,7 @@ def parse_chunk(chunk: DocChunk) -> Document:
         metadata={
             "source": chunk.meta.origin.filename,
             "chunk_id": chunk_id,
-            "pages": page_numbers
+            "pages": str(page_numbers)
         }
     )
 

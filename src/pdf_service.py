@@ -143,7 +143,7 @@ def parse_chunk(chunk) -> Document:
         metadata={
             "source": filename,
             "chunk_id": chunk_id,
-            "pages": sorted(set(pages)),
+            "pages": str(sorted(set(pages))),
         }
     )
 
