@@ -1,6 +1,5 @@
 import base64
 import hashlib
-from html import unescape
 import json
 from pathlib import Path
 import re
@@ -20,52 +19,6 @@ def extract_orig_elements(orig_elements):
     return decompressed_orig_elements.decode('utf-8')
 
 def clean_text(s: Optional[str]) -> str:
-    if not s:
-        return ""
-
-    # basic unescape + normalize whitespace
-    s = unescape(s)
-    s = s.replace("\u00A0", " ")  # non-breaking space
-    s = s.replace("\u2013", "-").replace("\u2014", "-")  # normalize dashes
-    s = s.replace("\u2018", "'").replace("\u2019", "'").replace("\u201c", '"').replace("\u201d", '"')
-    s = re.sub(r"\s+", " ", s).strip()
-
-    # remove trailing/leading pipes, stray underscores and repeated punctuation
-    s = re.sub(r"^[\|\_\-\s]+", "", s)   # leading noise
-    s = re.sub(r"[\|\_\-\s]+$", "", s)   # trailing noise
-
-    # remove isolated OCR artifacts like "—_ 3" -> "3" or "- 7" -> "7"
-    s = re.sub(r"^[\-\—\_]+\s*", "", s)  # leading dashes/underscores
-    s = re.sub(r"\s*[\|\_]+\s*", " ", s) # internal pipes/underscores -> space
-
-    # fix stray sequences like "<12000-" or "< 12000-" -> "<12000"
-    s = re.sub(r"<\s*([0-9]+)[\-\s]*", r"<\1", s)
-
-    # remove stray single-letter prefixes like "L :" or "A :" at line start (common OCR noise)
-    s = re.sub(r"^[A-Za-z]\s*[:\-]\s*", "", s)
-
-    # normalize slashes, plus signs, commas and semicolons spacing
-    s = re.sub(r"\s*/\s*", " / ", s)
-    s = re.sub(r"\s*\+\s*", " + ", s)
-    s = re.sub(r"\s*,\s*", ", ", s)
-    s = re.sub(r"\s*;\s*", "; ", s)
-
-    # collapse repeated punctuation (e.g., "——" or "--" -> "-")
-    s = re.sub(r"[-]{2,}", "-", s)
-    s = re.sub(r"[;]{2,}", ";", s)
-
-    # remove stray braces or weird leading tokens like "{| _" -> ""
-    s = re.sub(r"[\{\}\[\]\|_]+", " ", s)
-    s = re.sub(r"\s+", " ", s).strip()
-
-    # common OCR typos: "Vanne" -> "Vane", fix obvious misspellings if desired
-    s = re.sub(r"\bVanne\b", "Vane", s, flags=re.IGNORECASE)
-
-    # remove lone punctuation at ends
-    s = re.sub(r"^[\:\-\;\,\.]+", "", s)
-    s = re.sub(r"[\:\-\;\,\.]+$", "", s)
-
-    # final trim and return
     return s.strip()
 
 def table_to_matrix(table_tag) -> List[List[str]]:

@@ -33,8 +33,7 @@ sudo systemctl enable cloudflared
 
 # utils
 
-apt install poppler-utils -y
-apt install tesseract-ocr -y
+apt install poppler-utils tesseract-ocr -y
 
 # openai MXFP4
 

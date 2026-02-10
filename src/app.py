@@ -7,6 +7,7 @@ from src.config import reset_folders
 from src.chroma_service import add_to_chroma, delete_chroma_collection, query_chroma
 from src.model_service import model_predict
 from src.pdf_service import process_uploaded_pdf
+from src.file_service import process_uploaded_file
 
 os.environ["JPYPE_JVM_OPTIONS"] = "--enable-native-access=ALL-UNNAMED"
 
@@ -28,7 +29,7 @@ def error_response(msg: str, status_code: int = 400):
 @app.post("/upload_pdf")
 async def upload_pdf(file: UploadFile = File(...)):
     try:
-        documents = process_uploaded_pdf(file)
+        documents = process_uploaded_file(file)
         if not documents:
             return error_response("No documents attached.", status_code=400)
 
@@ -75,7 +76,7 @@ def gr_upload(files) -> tuple[str, None]:
                     filename=os.path.basename(f.name),
                     file=fh
                 )
-                documents = process_uploaded_pdf(upload_file)
+                documents = process_uploaded_file(upload_file)
 
                 if documents:
                     add_to_chroma(documents)

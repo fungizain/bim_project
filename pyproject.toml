@@ -13,7 +13,7 @@ dependencies = [
     "langchain-community (>=0.4.1,<0.5.0)",
     "langchain-text-splitters (>=1.1.0,<2.0.0)",
     "langchain-unstructured (>=1.0.1,<2.0.0)",
-    "unstructured[pdf] (>=0.18.27,<0.19.0)",
+    "unstructured[all-docs] (>=0.18.31,<0.19.0)",
     "langchain-huggingface (>=1.2.0,<2.0.0)",
     "langchain-core (>=1.2.7,<2.0.0)",
     "langchain-chroma (>=1.1.0,<2.0.0)",
@@ -25,7 +25,8 @@ dependencies = [
     "accelerate (>=1.12.0,<2.0.0)",
     "kernels (>=0.11.7,<0.12.0)",
     "triton (>=3.4) ; sys_platform == 'linux'",
-    "openai-harmony (>=0.0.8,<0.0.9)"
+    "openai-harmony (>=0.0.8,<0.0.9)",
+    "docling (>=2.72.0,<3.0.0)"
 ]
 
 [tool.poetry]

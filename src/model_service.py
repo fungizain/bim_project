@@ -49,6 +49,9 @@ qa_pipeline = pipeline(
     return_full_text=False
 )
 
+def get_tokenizer():
+    return tokenizer
+
 def get_embedder():
     return embedder
 
