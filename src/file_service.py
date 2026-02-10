@@ -48,6 +48,7 @@ def load_file(file_path: Path) -> list[Document]:
     chunk_iter = chunker.chunk(dl_doc=result.document)
     chunks = list(chunk_iter)
     chunks = [parse_chunk(chunk) for chunk in chunks]
+    return chunks
 
 def process_uploaded_file(upload_file) -> list[Document]:
     try:
