@@ -136,7 +136,6 @@ def parse_chunk(chunk) -> Document:
         else:
             result.append(e["text"])
     content = "\n".join(result)
-    page_range = (min(pages), max(pages))
     chunk_id = hashlib.md5(content.encode("utf-8")).hexdigest()
 
     return Document(
@@ -144,8 +143,7 @@ def parse_chunk(chunk) -> Document:
         metadata={
             "source": filename,
             "chunk_id": chunk_id,
-            "page_start": page_range[0],
-            "page_end": page_range[1],
+            "pages": sorted(set(pages)),
         }
     )
 

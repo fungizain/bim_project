@@ -68,7 +68,7 @@ def query_chroma(manufacturer: str, model_number: str, query_attr: str, k: int =
     hits = "\n\n".join(
         [
             f"[chunk {m.get('chunk_id')} | distance: {dist:.4f}]\n"
-            f"source: {m.get('source')} | pages: {m.get('page_start')}-{m.get('page_end')}\n"
+            f"source: {m.get('source')} | pages: {m.get('pages')}\n"
             f"{doc}"
             for m, doc, dist in zip(metadatas, documents, distances)
         ]
