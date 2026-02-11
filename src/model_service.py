@@ -100,7 +100,8 @@ def prepare_convo(
     output_ins = (
         "Output Format:\n"
         "- Each answer must be formatted strictly as:\n"
-        "<order> <value> (<confidence>%) [Ref: <filename> page <page> line <line>]"
+        "<order> <value> (<confidence>%) [Ref: <filename> page <page> line <line>]\n"
+        "- If no answer is found, answer: Not Found"
     )
     instructions = "\n".join([task_ins, constraints_ins, output_ins])
     developer_message = DeveloperContent.new().with_instructions(instructions)
