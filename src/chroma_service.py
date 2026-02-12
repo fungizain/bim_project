@@ -55,13 +55,12 @@ def query_collection(
 
     documents = results["documents"][0]
     metadatas = results["metadatas"][0]
-    distances = results["distances"][0]
+    # distances = results["distances"][0]
     hits = "\n\n".join(
         [
-            f"[chunk {m.get('chunk_id')} | distance: {dist:.4f}]\n"
             f"Ref: {m.get('source')} | pages: {m.get('pages')}\n"
             f"{doc}"
-            for m, doc, dist in zip(metadatas, documents, distances)
+            for m, doc in zip(metadatas, documents)
         ]
     )
 
