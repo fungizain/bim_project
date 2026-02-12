@@ -51,9 +51,9 @@ def load_file(file_path: Path) -> list[Document]:
     chunks = [parse_chunk(chunk) for chunk in chunks]
     return chunks
 
-def process_uploaded(upload_file) -> list[Document]:
+def process_uploaded(upload_file, path: Path) -> list[Document]:
     try:
-        file_path = SPECIFIC_UPLOAD_PATH / upload_file.filename
+        file_path = path / upload_file.filename
         with open(file_path, "wb") as f:
             f.write(upload_file.file.read())
 
