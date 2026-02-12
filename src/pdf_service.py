@@ -6,11 +6,12 @@ import re
 from typing import List, Optional
 import zlib
 from bs4 import BeautifulSoup
+from fastapi import UploadFile
 from langchain_core.documents import Document
 from unstructured.partition.pdf import partition_pdf
 from unstructured.chunking.title import chunk_by_title
 
-from src.config import OUTPUT_PATH, UPLOAD_PATH
+from src.config import OUTPUT_PATH, SPECIFIC_UPLOAD_PATH, SHARED_UPLOAD_PATH
 
 # Extract the contents of an orig_elements field.
 def extract_orig_elements(orig_elements):
@@ -177,14 +178,20 @@ def load_pdf(file_path: Path) -> list[Document]:
             pdf_chunks.append(doc)
     return pdf_chunks
 
-def process_uploaded_pdf(upload_file) -> list[Document]:
+def process_uploaded(upload_file: UploadFile, path: Path) -> list[Document]:
     try:
-        file_path = UPLOAD_PATH / upload_file.filename
+        file_path = path / upload_file.filename
         with open(file_path, "wb") as f:
             f.write(upload_file.file.read())
 
         documents = load_pdf(file_path)
         return documents
     except Exception as e:
-        print(f"Error processing uploaded PDF: {str(e)}")
+        print(f"Error processing uploaded file: {str(e)}")
         return []
+    
+def process_specific_upload(upload_file: UploadFile) -> list[Document]:
+    return process_uploaded(upload_file, SPECIFIC_UPLOAD_PATH)
+
+def process_shared_upload(upload_file: UploadFile) -> list[Document]:
+    return process_uploaded(upload_file, SHARED_UPLOAD_PATH)

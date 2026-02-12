@@ -2,10 +2,11 @@ import hashlib
 from pathlib import Path
 from docling.chunking import HybridChunker, DocChunk
 from docling.document_converter import DocumentConverter
+from fastapi import UploadFile
 from langchain_core.documents import Document
 from transformers import AutoTokenizer
 
-from src.config import UPLOAD_PATH
+from src.config import SPECIFIC_UPLOAD_PATH, SHARED_UPLOAD_PATH
 
 MODEL_NAME = "bert-base-uncased"
 MAX_TOKENS = 1024
@@ -50,9 +51,9 @@ def load_file(file_path: Path) -> list[Document]:
     chunks = [parse_chunk(chunk) for chunk in chunks]
     return chunks
 
-def process_uploaded_file(upload_file) -> list[Document]:
+def process_uploaded(upload_file) -> list[Document]:
     try:
-        file_path = UPLOAD_PATH / upload_file.filename
+        file_path = SPECIFIC_UPLOAD_PATH / upload_file.filename
         with open(file_path, "wb") as f:
             f.write(upload_file.file.read())
 
@@ -61,3 +62,9 @@ def process_uploaded_file(upload_file) -> list[Document]:
     except Exception as e:
         print(f"Error processing uploaded PDF: {str(e)}")
         return []
+    
+def process_specific_upload(upload_file: UploadFile) -> list[Document]:
+    return process_uploaded(upload_file, SPECIFIC_UPLOAD_PATH)
+
+def process_shared_upload(upload_file: UploadFile) -> list[Document]:
+    return process_uploaded(upload_file, SHARED_UPLOAD_PATH)

@@ -80,6 +80,7 @@ def prepare_convo(
         "Task:\n"
         "- Read the document content (up to 5 chunks provided).\n"
         f"- Extract the value of the attribute {query_attr} from each relevant chunk.\n"
+        "- Prioritize chunks from the 'SPECIFIC COLLECTION'. Only if no valid answer is found there, then check 'SHARED COLLECTION' chunks.\n"
         "- If multiple possible answers exist, return all unique values found, up to 5 in total.\n"
     )
 

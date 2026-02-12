@@ -6,18 +6,33 @@ if Path("src").exists():
 else:
     BASE_PATH = Path(".")
 
-UPLOAD_PATH = BASE_PATH / "upload_pdfs"
+SPECIFIC_UPLOAD_PATH = BASE_PATH / "specific_upload"
+SHARED_UPLOAD_PATH = BASE_PATH / "shared_upload"
 CHROMA_PATH = BASE_PATH / "chroma_db"
 OUTPUT_PATH = BASE_PATH / "output_files"
 
-ALL_PATHS = [UPLOAD_PATH, CHROMA_PATH, OUTPUT_PATH]
+ALL_PATHS = [SPECIFIC_UPLOAD_PATH, SHARED_UPLOAD_PATH, CHROMA_PATH, OUTPUT_PATH]
 
 for p in ALL_PATHS:
     p.mkdir(parents=True, exist_ok=True)
 
-def reset_folders():
-    for folder in [UPLOAD_PATH, OUTPUT_PATH]:
-        if folder.exists():
-            shutil.rmtree(folder)
-        folder.mkdir(parents=True, exist_ok=True)
+def list_folders(folder: Path):
+    return [item.name for item in folder.iterdir()]
+
+def list_specific():
+    return list_folders(SPECIFIC_UPLOAD_PATH)
+
+def list_shared():
+    return list_folders(SHARED_UPLOAD_PATH)
+
+def reset(folder: Path):
+    if folder.exists():
+        shutil.rmtree(folder)
+    folder.mkdir(parents=True, exist_ok=True)
     return "✅ Reset success"
+
+def reset_specific():
+    return reset(SPECIFIC_UPLOAD_PATH)
+
+def reset_shared():
+    return reset(SHARED_UPLOAD_PATH)

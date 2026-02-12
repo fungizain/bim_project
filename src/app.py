@@ -3,11 +3,21 @@ from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.responses import JSONResponse
 import gradio as gr
 
-from src.config import reset_folders
-from src.chroma_service import add_to_chroma, delete_chroma_collection, query_chroma
+from src.config import (
+    list_specific,
+    list_shared,
+    reset_specific,
+    reset_shared
+)
+from src.chroma_service import (
+    add_to_specific,
+    add_to_shared,
+    delete_specific,
+    delete_shared,
+    query_chroma
+)
 from src.model_service import model_predict
-from src.pdf_service import process_uploaded_pdf
-from src.file_service import process_uploaded_file
+from src.file_service import process_specific_upload, process_shared_upload
 
 os.environ["JPYPE_JVM_OPTIONS"] = "--enable-native-access=ALL-UNNAMED"
 
@@ -26,18 +36,56 @@ def error_response(msg: str, status_code: int = 400):
     detail = [{"msg": msg, "type": "error"}]
     return JSONResponse(content={"detail": detail}, status_code=status_code)
 
-@app.post("/upload_pdf")
-async def upload_pdf(file: UploadFile = File(...)):
+@app.post("/upload_specific_file")
+async def upload_specific_file(file: UploadFile = File(...)):
     try:
-        documents = process_uploaded_file(file)
+        documents = process_specific_upload(file)
         if not documents:
             return error_response("No documents attached.", status_code=400)
 
-        add_to_chroma(documents)
+        add_to_specific(documents)
         return success_response(msg=f"Uploaded & Indexed {file.filename}")
     except Exception as e:
         return error_response(str(e), status_code=500)
     
+@app.post("/upload_shared_file")
+async def upload_shared_file(file: UploadFile = File(...)):
+    try:
+        documents = process_shared_upload(file)
+        if not documents:
+            return error_response("No documents attached.", status_code=400)
+
+        add_to_shared(documents)
+        return success_response(msg=f"Uploaded & Indexed {file.filename}")
+    except Exception as e:
+        return error_response(str(e), status_code=500)
+
+@app.get("/ls_specific")
+async def ls_specific():
+    return success_response(data={"files": list_specific()})
+
+@app.get("/ls_shared")
+async def ls_shared():
+    return success_response(data={"files": list_shared()})
+
+@app.get("/reset_specific")
+async def reset_specific():
+    try:
+        delete_specific()
+        reset_result = reset_specific()
+        return success_response(msg=f"Reset done: {reset_result}")
+    except Exception as e:
+        return error_response(str(e), status_code=500)
+
+@app.get("/reset_shared")
+async def reset_shared():
+    try:
+        delete_shared()
+        reset_result = reset_shared()
+        return success_response(msg=f"Reset done: {reset_result}")
+    except Exception as e:
+        return error_response(str(e), status_code=500)
+
 @app.post("/ask_question")
 async def ask_question(
     manufacturer: str = Form(""),
@@ -53,18 +101,9 @@ async def ask_question(
         return success_response(data={"answer": answer, "hits": hits})
     except Exception as e:
         return error_response(str(e), status_code=500)
-    
-@app.post("/reset")
-async def reset():
-    try:
-        reset_result = reset_folders()
-        delete_chroma_collection()
-        return success_response(msg=f"Reset done: {reset_result}")
-    except Exception as e:
-        return error_response(str(e), status_code=500)
 
 # ---------------- Gradio UI ----------------
-def gr_upload(files) -> tuple[str, None]:
+def gr_sp_upload(files) -> tuple[str, None]:
     results = []
     if not files:
         return "⚠️ No files uploaded", None
@@ -76,10 +115,10 @@ def gr_upload(files) -> tuple[str, None]:
                     filename=os.path.basename(f.name),
                     file=fh
                 )
-                documents = process_uploaded_file(upload_file)
+                documents = process_specific_upload(upload_file)
 
                 if documents:
-                    add_to_chroma(documents)
+                    add_to_specific(documents)
                     results.append(f"Uploaded & Indexed {upload_file.filename}")
                 else:
                     results.append(f"No documents extracted from {upload_file.filename}")
@@ -88,10 +127,42 @@ def gr_upload(files) -> tuple[str, None]:
 
     return "\n".join(results), None
 
-def gr_reset() -> tuple[str, str]:
+def gr_sh_upload(files) -> tuple[str, None]:
+    results = []
+    if not files:
+        return "⚠️ No files uploaded", None
+
+    for f in files:
+        try:
+            with open(f.name, "rb") as fh:
+                upload_file = UploadFile(
+                    filename=os.path.basename(f.name),
+                    file=fh
+                )
+                documents = process_shared_upload(upload_file)
+
+                if documents:
+                    add_to_shared(documents)
+                    results.append(f"Uploaded & Indexed {upload_file.filename}")
+                else:
+                    results.append(f"No documents extracted from {upload_file.filename}")
+        except Exception as e:
+            results.append(f"Error processing {f.name}: {e}")
+
+    return "\n".join(results), None
+
+def gr_sp_reset() -> tuple[str, str]:
     try:
-        reset_result = reset_folders()
-        delete_chroma_collection()
+        reset_result = reset_specific()
+        delete_specific()
+        return f"Reset done: {reset_result}", ""
+    except Exception as e:
+        return f"Reset failed: {e}", ""
+    
+def gr_sh_reset() -> tuple[str, str]:
+    try:
+        reset_result = reset_shared()
+        delete_shared()
         return f"Reset done: {reset_result}", ""
     except Exception as e:
         return f"Reset failed: {e}", ""
@@ -108,28 +179,42 @@ def gr_ask(manufacturer, model_number, query_attr) -> tuple[str, str]:
         return f"Error: {str(e)}", ""
 
 with gr.Blocks() as demo:
-    gr.Markdown("## PDF QA Demo\nUpload files → Query")
+    gr.Markdown("## File QA Demo\nUpload files → Query")
 
-    with gr.Tab("Upload"):
-        files = gr.File(label="Upload Files", file_types=None, file_count="multiple")
+    with gr.Tab("Upload Specific"):
+        files = gr.File(label="Upload Specific Files", file_types=None, file_count="multiple")
         with gr.Row():
             with gr.Column():
-                upload_btn = gr.Button("Upload")
-                upload_out = gr.Textbox(label="Upload Result", lines=6)
+                upload_sp_btn = gr.Button("Upload")
+                upload_sp_out = gr.Textbox(label="Upload Result", lines=6)
             with gr.Column():
-                reset_btn = gr.Button("Reset")
-                reset_out = gr.Textbox(label="Reset Status", interactive=False)
+                reset_sp_btn = gr.Button("Reset")
+                reset_sp_out = gr.Textbox(label="Reset Status", interactive=False)
     
-    with gr.Tab("Ask"):
+    upload_sp_btn.click(gr_sp_upload, inputs=[files], outputs=[upload_sp_out, files])
+    reset_sp_btn.click(gr_sp_reset, outputs=[reset_sp_out, upload_sp_out])
+
+    with gr.Tab("Upload Shared"):
+        files = gr.File(label="Upload Shared Files", file_types=None, file_count="multiple")
+        with gr.Row():
+            with gr.Column():
+                upload_sh_btn = gr.Button("Upload")
+                upload_sh_out = gr.Textbox(label="Upload Result", lines=6)
+            with gr.Column():
+                reset_sh_btn = gr.Button("Reset")
+                reset_sh_out = gr.Textbox(label="Reset Status", interactive=False)
+    
+    upload_sh_btn.click(gr_sh_upload, inputs=[files], outputs=[upload_sh_out, files])
+    reset_sh_btn.click(gr_sh_reset, outputs=[reset_sh_out, upload_sh_out])
+
+    with gr.Tab("Query"):
         manufacturer = gr.Textbox(label="Manufacturer", placeholder="Enter manufacturer name")
         model_number = gr.Textbox(label="Model Number", placeholder="Enter model number")
         query_attr   = gr.Textbox(label="Query", placeholder="Enter attribute to query")
         ask_btn = gr.Button("Submit")
         answer = gr.Textbox(label="Answer", lines=8)
         hits_box = gr.Textbox(label="Context Hits (Full)", lines=20)
-        
-    upload_btn.click(gr_upload, inputs=[files], outputs=[upload_out, files])
-    reset_btn.click(gr_reset, outputs=[reset_out, upload_out])
+    
     ask_btn.click(
         gr_ask,
         inputs=[manufacturer, model_number, query_attr],

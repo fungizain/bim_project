@@ -6,6 +6,7 @@ test.txt
 assets/
 src/chroma_db/
 src/output_files/
-src/upload_pdfs/
+src/specific_upload/
+src/shared_upload/
 
 .gradio
