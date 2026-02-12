@@ -19,10 +19,10 @@ for p in ALL_PATHS:
 def list_folders(folder: Path):
     return [item.name for item in folder.iterdir()]
 
-def list_specific():
+def list_specific_folders():
     return list_folders(SPECIFIC_UPLOAD_PATH)
 
-def list_shared():
+def list_shared_folders():
     return list_folders(SHARED_UPLOAD_PATH)
 
 def reset(folder: Path):
@@ -31,8 +31,8 @@ def reset(folder: Path):
     folder.mkdir(parents=True, exist_ok=True)
     return "✅ Reset success"
 
-def reset_specific():
+def reset_specific_folders():
     return reset(SPECIFIC_UPLOAD_PATH)
 
-def reset_shared():
+def reset_shared_folders():
     return reset(SHARED_UPLOAD_PATH)

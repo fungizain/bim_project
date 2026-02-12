@@ -4,10 +4,10 @@ from fastapi.responses import JSONResponse
 import gradio as gr
 
 from src.config import (
-    list_specific,
-    list_shared,
-    reset_specific,
-    reset_shared
+    list_specific_folders,
+    list_shared_folders,
+    reset_specific_folders,
+    reset_shared_folders
 )
 from src.chroma_service import (
     add_to_specific,
@@ -60,19 +60,19 @@ async def upload_shared_file(file: UploadFile = File(...)):
     except Exception as e:
         return error_response(str(e), status_code=500)
 
-@app.get("/ls_specific")
-async def ls_specific():
-    return success_response(data={"files": list_specific()})
+@app.get("/list_specific")
+async def list_specific():
+    return success_response(data={"files": list_specific_folders()})
 
-@app.get("/ls_shared")
-async def ls_shared():
-    return success_response(data={"files": list_shared()})
+@app.get("/list_shared")
+async def list_shared():
+    return success_response(data={"files": list_shared_folders()})
 
 @app.get("/reset_specific")
 async def reset_specific():
     try:
         delete_specific()
-        reset_result = reset_specific()
+        reset_result = reset_specific_folders()
         return success_response(msg=f"Reset done: {reset_result}")
     except Exception as e:
         return error_response(str(e), status_code=500)
@@ -81,7 +81,7 @@ async def reset_specific():
 async def reset_shared():
     try:
         delete_shared()
-        reset_result = reset_shared()
+        reset_result = reset_shared_folders()
         return success_response(msg=f"Reset done: {reset_result}")
     except Exception as e:
         return error_response(str(e), status_code=500)
@@ -153,7 +153,7 @@ def gr_sh_upload(files) -> tuple[str, None]:
 
 def gr_sp_reset() -> tuple[str, str]:
     try:
-        reset_result = reset_specific()
+        reset_result = reset_specific_folders()
         delete_specific()
         return f"Reset done: {reset_result}", ""
     except Exception as e:
@@ -161,7 +161,7 @@ def gr_sp_reset() -> tuple[str, str]:
     
 def gr_sh_reset() -> tuple[str, str]:
     try:
-        reset_result = reset_shared()
+        reset_result = reset_shared_folders()
         delete_shared()
         return f"Reset done: {reset_result}", ""
     except Exception as e:
