@@ -19,11 +19,10 @@ MODEL_NAME = "bert-base-uncased"
 MAX_TOKENS = 1024
 
 pipeline_options = ThreadedPdfPipelineOptions(
-    accelerator_options=AcceleratorOptions(device=AcceleratorDevice.CUDA),
     ocr_batch_size=4,
     layout_batch_size=64,
-    table_batch_size=4
-    # do_table_structure=True
+    table_batch_size=4,
+    do_table_structure=True
 )
 pipeline_options.table_structure_options.do_cell_matching = False
 pipeline_options.table_structure_options.mode = TableFormerMode.ACCURATE
