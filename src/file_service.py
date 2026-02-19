@@ -33,8 +33,8 @@ pipeline_options = ThreadedPdfPipelineOptions(
     do_table_structure=True
 )
 pipeline_options.table_structure_options.do_cell_matching = False
-# pipeline_options.table_structure_options.mode = TableFormerMode.ACCURATE
-pipeline_options.ocr_options = RapidOcrOptions(backend="torch")
+pipeline_options.table_structure_options.mode = TableFormerMode.ACCURATE
+# pipeline_options.ocr_options = RapidOcrOptions(backend="torch")
 converter = DocumentConverter(
     format_options={
         InputFormat.PDF: PdfFormatOption(pipeline_options=pipeline_options)
