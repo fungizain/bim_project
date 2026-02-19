@@ -16,7 +16,9 @@ from transformers import AutoTokenizer
 
 from src.config import SPECIFIC_UPLOAD_PATH, SHARED_UPLOAD_PATH
 
-os.environ["PYTORCH_KERNEL_CACHE_PATH"] = "/tmp/torch_cache"
+cache_path = "/tmp/torch_cache"
+Path(cache_path).mkdir(parents=True, exist_ok=True)
+os.environ["PYTORCH_KERNEL_CACHE_PATH"] = cache_path
 
 MODEL_NAME = "bert-base-uncased"
 MAX_TOKENS = 1024
