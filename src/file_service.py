@@ -1,4 +1,5 @@
 import hashlib
+import os
 from pathlib import Path
 from docling.chunking import HybridChunker, DocChunk
 from docling.datamodel.accelerator_options import AcceleratorDevice, AcceleratorOptions
@@ -15,10 +16,13 @@ from transformers import AutoTokenizer
 
 from src.config import SPECIFIC_UPLOAD_PATH, SHARED_UPLOAD_PATH
 
+os.environ["PYTORCH_KERNEL_CACHE_PATH"] = "/tmp/torch_cache"
+
 MODEL_NAME = "bert-base-uncased"
 MAX_TOKENS = 1024
 
 pipeline_options = ThreadedPdfPipelineOptions(
+    accelerator_options=AcceleratorOptions(device=AcceleratorDevice.CUDA),
     ocr_batch_size=4,
     layout_batch_size=64,
     table_batch_size=4,
