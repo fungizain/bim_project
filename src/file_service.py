@@ -16,9 +16,11 @@ from transformers import AutoTokenizer
 
 from src.config import SPECIFIC_UPLOAD_PATH, SHARED_UPLOAD_PATH
 
-cache_path = "/tmp/torch_cache"
-Path(cache_path).mkdir(parents=True, exist_ok=True)
-os.environ["PYTORCH_KERNEL_CACHE_PATH"] = cache_path
+env = os.getenv("APP_ENV")
+if env == "prod":
+    cache_path = "/tmp/torch_cache"
+    Path(cache_path).mkdir(parents=True, exist_ok=True)
+    os.environ["PYTORCH_KERNEL_CACHE_PATH"] = cache_path
 
 MODEL_NAME = "bert-base-uncased"
 MAX_TOKENS = 1024
@@ -78,7 +80,7 @@ def parse_chunk(chunk: DocChunk) -> Document:
 
 def load_file(file_path: Path) -> list[Document]:
     result = converter.convert(file_path)
-    chunk_iter = chunker.chunk(dl_doc=result.document.export_to_markdown())
+    chunk_iter = chunker.chunk(dl_doc=result.document)
     chunks = list(chunk_iter)
     chunks = [parse_chunk(chunk) for chunk in chunks]
     return chunks
