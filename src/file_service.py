@@ -1,7 +1,14 @@
 import hashlib
 from pathlib import Path
 from docling.chunking import HybridChunker, DocChunk
-from docling.document_converter import DocumentConverter
+from docling.datamodel.accelerator_options import AcceleratorDevice, AcceleratorOptions
+from docling.datamodel.base_models import InputFormat
+from docling.document_converter import DocumentConverter, PdfFormatOption
+from docling.datamodel.pipeline_options import (
+    ThreadedPdfPipelineOptions,
+    RapidOcrOptions,
+    TableFormerMode
+)
 from fastapi import UploadFile
 from langchain_core.documents import Document
 from transformers import AutoTokenizer
@@ -10,7 +17,22 @@ from src.config import SPECIFIC_UPLOAD_PATH, SHARED_UPLOAD_PATH
 
 MODEL_NAME = "bert-base-uncased"
 MAX_TOKENS = 1024
-converter = DocumentConverter()
+
+pipeline_options = ThreadedPdfPipelineOptions(
+    accelerator_options=AcceleratorOptions(device=AcceleratorDevice.CUDA),
+    ocr_batch_size=4,
+    layout_batch_size=64,
+    table_batch_size=4,
+    do_table_structure=True
+)
+pipeline_options.table_structure_options.do_cell_matching = False
+pipeline_options.table_structure_options.mode = TableFormerMode.ACCURATE
+pipeline_options.ocr_options = RapidOcrOptions(backend="torch")
+converter = DocumentConverter(
+    format_options={
+        InputFormat.PDF: PdfFormatOption(pipeline_options=pipeline_options)
+    }
+)
 tokenizer = AutoTokenizer.from_pretrained(
     MODEL_NAME,
     model_max_length=MAX_TOKENS,
