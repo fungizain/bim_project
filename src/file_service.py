@@ -25,7 +25,7 @@ pipeline_options = ThreadedPdfPipelineOptions(
     table_batch_size=4,
     do_table_structure=True
 )
-pipeline_options.table_structure_options.do_cell_matching = False
+# pipeline_options.table_structure_options.do_cell_matching = False
 pipeline_options.table_structure_options.mode = TableFormerMode.ACCURATE
 pipeline_options.ocr_options = RapidOcrOptions(backend="torch")
 converter = DocumentConverter(
