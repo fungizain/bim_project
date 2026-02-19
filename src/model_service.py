@@ -165,7 +165,7 @@ def model_predict(manufacturer: str, model_number: str, query_attr: str, hits: s
             input_ids=input_ids,
             max_new_tokens=256,
             eos_token_id=stop_token_ids,
-            temperature=0
+            temperature=0.0
         )
         completion_ids = outputs[0][len(prefill_ids):].cpu().tolist()
         parsed = enc.parse_messages_from_completion_tokens(completion_ids, Role.ASSISTANT)
