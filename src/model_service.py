@@ -132,7 +132,6 @@ def model_predict(manufacturer: str, model_number: str, query_attr: str, hits: s
             input_ids=input_ids,
             max_new_tokens=256,
             eos_token_id=stop_token_ids,
-            temperature=1e-5,
             do_sample=False
         )
         completion_ids = outputs[0][len(prefill_ids):].cpu().tolist()
