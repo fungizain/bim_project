@@ -15,7 +15,6 @@ from langchain_core.documents import Document
 from transformers import AutoTokenizer
 
 from src.config import SPECIFIC_UPLOAD_PATH, SHARED_UPLOAD_PATH
-from src.model_service import model_summarize
 
 env = os.getenv("APP_ENV")
 if env == "prod":
@@ -65,10 +64,8 @@ def parse_chunk(chunk: DocChunk) -> Document:
         )
     ]
 
-    result = model_summarize(chunk.text)
-
     return Document(
-        page_content=result,
+        page_content=chunk.text,
         metadata={
             "source": chunk.meta.origin.filename,
             "chunk_id": chunk_id,

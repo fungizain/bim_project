@@ -143,10 +143,3 @@ def model_predict(manufacturer: str, model_number: str, query_attr: str, hits: s
         return "No final message found"
     except Exception as e:
         return f"Something went wrong :( Error: {e}"
-    
-def model_summarize(hits: str) -> str:
-    prompt = (
-        "Summarize the following document content, focusing on key information relevant to product attributes. "
-        f"Document Content:\n{hits}"
-    )
-    return model_predict_from_prompt(prompt)
