@@ -57,6 +57,11 @@ def parse_chunk(chunk: DocChunk) -> Document:
         )
     ]
 
+    debug_file = Path("debug.txt")
+    with debug_file.open("a", encoding="utf-8") as f:  # 用 append 模式
+        f.write(f"--- Chunk {chunk_id} ---\n")
+        f.write(chunk.text.strip() + "\n\n")
+
     return Document(
         page_content=chunk.text,
         metadata={
@@ -71,13 +76,6 @@ def load_file(file_path: Path) -> list[Document]:
     chunk_iter = chunker.chunk(dl_doc=result.document)
     chunks = list(chunk_iter)
     chunks = [parse_chunk(chunk) for chunk in chunks]
-
-    debug_file = Path("debug.txt")
-    with debug_file.open("w", encoding="utf-8") as f:
-        for i, chunk in enumerate(chunks, start=1):
-            f.write(f"--- Chunk {i} ---\n")
-            f.write(chunk.text.strip() + "\n\n")
-
     return chunks
 
 def process_uploaded(upload_file, path: Path) -> list[Document]:
