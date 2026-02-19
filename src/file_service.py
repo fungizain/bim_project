@@ -20,12 +20,12 @@ MAX_TOKENS = 1024
 
 pipeline_options = ThreadedPdfPipelineOptions(
     accelerator_options=AcceleratorOptions(device=AcceleratorDevice.CUDA),
-    ocr_batch_size=4,
-    layout_batch_size=64,
-    table_batch_size=4,
-    do_table_structure=True
+    # ocr_batch_size=4,
+    # layout_batch_size=64,
+    # table_batch_size=4,
+    # do_table_structure=True
 )
-# pipeline_options.table_structure_options.do_cell_matching = False
+pipeline_options.table_structure_options.do_cell_matching = False
 pipeline_options.table_structure_options.mode = TableFormerMode.ACCURATE
 pipeline_options.ocr_options = RapidOcrOptions(backend="torch")
 converter = DocumentConverter(
@@ -73,7 +73,7 @@ def parse_chunk(chunk: DocChunk) -> Document:
 
 def load_file(file_path: Path) -> list[Document]:
     result = converter.convert(file_path)
-    chunk_iter = chunker.chunk(dl_doc=result.document)
+    chunk_iter = chunker.chunk(dl_doc=result.document.export_to_markdown())
     chunks = list(chunk_iter)
     chunks = [parse_chunk(chunk) for chunk in chunks]
     return chunks
