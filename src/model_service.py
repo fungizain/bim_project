@@ -112,35 +112,33 @@ def prepare_convo(
 
     task_ins = (
         "Task:\n"
-        f"- Extract the attribute {query_attr} from up to 10 chunks.\n"
-        "- Prioritize 'SPECIFIC COLLECTION'.\n"
-        "- If no valid answer in SPECIFIC, check 'SHARED COLLECTION'.\n"
-        "- If both collections have answers, return both (clearly separated).\n"
+        f"- Extract {query_attr} from up to 10 chunks.\n"
+        "- Prioritize 'SPECIFIC COLLECTION'; fallback to 'SHARED COLLECTION' if none.\n"
+        "- If both have answers, return both (separated).\n"
         "- Return up to 5 unique values.\n"
     )
 
     constraints_ins = "Constraints:\n"
     if manufacturer and model_number:
-        constraints_ins += f"- Match manufacturer {manufacturer} and model {model_number}.\n"
+        constraints_ins += f"- Must match {manufacturer} {model_number}.\n"
     elif manufacturer:
-        constraints_ins += f"- Match manufacturer {manufacturer}.\n"
+        constraints_ins += f"- Must match {manufacturer}.\n"
     elif model_number:
-        constraints_ins += f"- Match model {model_number}.\n"
+        constraints_ins += f"- Must match {model_number}.\n"
 
     constraints_ins += (
-        "- Check each chunk separately.\n"
-        "- Do not skip chunks.\n"
-        "- No duplicate answers.\n"
-        "- Sort answers by confidence (high → low).\n"
+        "- Check each chunk.\n"
+        "- Do not skip.\n"
+        "- No duplicates.\n"
+        "- Sort by confidence (high→low).\n"
     )
 
     output_ins = (
         "Output Format:\n"
-        "- Format each answer as:\n"
-        "<value> (<confidence>%) [Ref: <filename> page <page> line <line>]\n"
-        "- Answers from 'SPECIFIC COLLECTION' are ~15% more reliable than 'SHARED'.\n"
-        "- Confidence max = 100%.\n"
-        "- If no answer, return: Not Found\n"
+        "- <value> (<confidence>%) [Ref: <filename> page <page> line <line>]\n"
+        "- 'SPECIFIC' answers ~15% more reliable than 'SHARED'.\n"
+        "- Confidence ≤ 100%.\n"
+        "- If none, return: Not Found\n"
     )
 
     instructions = "\n---------------------\n".join([task_ins, constraints_ins, output_ins])
