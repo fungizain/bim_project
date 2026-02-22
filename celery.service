@@ -4,7 +4,7 @@ After=network.target redis.service
 
 [Service]
 WorkingDirectory=/root/bim_project
-ExecStart=/root/bim_project/.venv/bin/poetry run celery -A src.task worker --loglevel=info
+ExecStart=/root/bim_project/.venv/bin/poetry run celery -A src.task worker --pool=solo --loglevel=info
 Restart=always
 RestartSec=5
 User=root
