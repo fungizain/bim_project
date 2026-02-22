@@ -53,7 +53,7 @@ async def upload_specific_file(file: UploadFile = File(...)):
     job_id = str(uuid.uuid4())
     file_path = file_to_tmp(file, job_id)
     process_specific_task.apply_async(args=[file_path], task_id=job_id)
-    return success_response(data={"job_id": job_id, "status": "submitted"})
+    return success_response(data={"job_id": job_id, "status": "PENDING", "result": None})
 
 @app.post("/upload_shared_file")
 async def upload_shared_file(file: UploadFile = File(...)):
@@ -63,7 +63,7 @@ async def upload_shared_file(file: UploadFile = File(...)):
     job_id = str(uuid.uuid4())
     file_path = file_to_tmp(file, job_id)    
     process_shared_task.apply_async(args=[file_path], task_id=job_id)
-    return success_response(data={"job_id": job_id, "status": "submitted"})
+    return success_response(data={"job_id": job_id, "status": "PENDING", "result": None})
 
 @app.get("/status/{job_id}")
 async def get_status(job_id: str):
