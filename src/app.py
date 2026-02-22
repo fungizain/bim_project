@@ -1,4 +1,7 @@
 import os
+import uuid
+import shutil
+from celery.result import AsyncResult
 from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.responses import JSONResponse
 import gradio as gr
@@ -18,6 +21,7 @@ from src.chroma_service import (
 )
 from src.model_service import model_predict
 from src.file_service import process_specific_upload, process_shared_upload
+from src.task import celery_app, process_specific_task, process_shared_task
 
 os.environ["JPYPE_JVM_OPTIONS"] = "--enable-native-access=ALL-UNNAMED"
 
@@ -36,29 +40,40 @@ def error_response(msg: str, status_code: int = 400):
     detail = [{"msg": msg, "type": "error"}]
     return JSONResponse(content={"detail": detail}, status_code=status_code)
 
+def file_to_tmp(file: UploadFile, job_id: str) -> str:
+    file_path = f"/tmp/{job_id}_{file.filename}"
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    return file_path
+
 @app.post("/upload_specific_file")
 async def upload_specific_file(file: UploadFile = File(...)):
-    try:
-        documents = process_specific_upload(file)
-        if not documents:
-            return error_response("No documents attached.", status_code=400)
+    if not file:
+        return error_response("No documents attached.", status_code=400)
+    job_id = str(uuid.uuid4())
+    file_path = file_to_tmp(file, job_id)
+    process_specific_task.apply_async(args=[file_path], task_id=job_id)
+    return success_response(data={"job_id": job_id, "status": "submitted"})
 
-        add_to_specific(documents)
-        return success_response(msg=f"Uploaded & Indexed {file.filename}")
-    except Exception as e:
-        return error_response(str(e), status_code=500)
-    
 @app.post("/upload_shared_file")
 async def upload_shared_file(file: UploadFile = File(...)):
-    try:
-        documents = process_shared_upload(file)
-        if not documents:
-            return error_response("No documents attached.", status_code=400)
+    documents = process_shared_upload(file)
+    if not documents:
+        return error_response("No documents attached.", status_code=400)
+    job_id = str(uuid.uuid4())
+    file_path = file_to_tmp(file, job_id)    
+    process_shared_task.apply_async(args=[file_path], task_id=job_id)
+    return success_response(data={"job_id": job_id, "status": "submitted"})
 
-        add_to_shared(documents)
-        return success_response(msg=f"Uploaded & Indexed {file.filename}")
-    except Exception as e:
-        return error_response(str(e), status_code=500)
+@app.get("/status/{job_id}")
+async def get_status(job_id: str):
+    result = AsyncResult(job_id, app=celery_app)
+    data = {
+        "job_id": job_id,
+        "state": result.state,
+        "result": result.result
+    }
+    return success_response(data=data)
 
 @app.get("/list_specific")
 async def list_specific():

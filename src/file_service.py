@@ -91,9 +91,10 @@ def process_uploaded(upload_file, path: Path) -> list[Document]:
     except Exception as e:
         print(f"Error processing uploaded PDF: {str(e)}")
         return []
-    
+
 def process_specific_upload(upload_file: UploadFile) -> list[Document]:
     return process_uploaded(upload_file, SPECIFIC_UPLOAD_PATH)
 
 def process_shared_upload(upload_file: UploadFile) -> list[Document]:
     return process_uploaded(upload_file, SHARED_UPLOAD_PATH)
+

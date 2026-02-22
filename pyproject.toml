@@ -26,7 +26,8 @@ dependencies = [
     "kernels (>=0.11.7,<0.12.0)",
     "triton (>=3.4) ; sys_platform == 'linux'",
     "openai-harmony (>=0.0.8,<0.0.9)",
-    "docling (>=2.72.0,<3.0.0)"
+    "docling (>=2.72.0,<3.0.0)",
+    "celery[redis] (>=5.6.2,<6.0.0)"
 ]
 
 [tool.poetry]

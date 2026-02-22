@@ -22,6 +22,8 @@ sudo systemctl enable docker-bim-app
 
 sudo ln -s $(pwd)/bim-app.service /etc/systemd/system/bim-app.service
 sudo ln -s $(pwd)/cloudflared.service /etc/systemd/system/cloudflared.service
+sudo ln -s $(pwd)/redis.service /etc/systemd/system/redis.service
+sudo ln -s $(pwd)/celery.service /etc/systemd/system/celery.service
 sudo systemctl daemon-reload
 
 # 啟動
@@ -30,10 +32,14 @@ sudo systemctl start bim-app
 sudo systemctl enable bim-app
 sudo systemctl start cloudflared
 sudo systemctl enable cloudflared
+sudo systemctl start redis
+sudo systemctl enable redis
+sudo systemctl start celery
+sudo systemctl enable celery
 
 # utils
 
-apt install poppler-utils tesseract-ocr -y
+apt install poppler-utils tesseract-ocr redis-server -y
 
 # openai MXFP4
 

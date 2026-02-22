@@ -1,0 +1,13 @@
+[Unit]
+Description=Celery Worker Service
+After=network.target redis.service
+
+[Service]
+WorkingDirectory=/root/bim_project
+ExecStart=/root/bim_project/.venv/bin/poetry run celery -A tasks worker --loglevel=info
+Restart=always
+RestartSec=5
+User=root
+
+[Install]
+WantedBy=multi-user.target
