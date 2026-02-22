@@ -57,8 +57,7 @@ async def upload_specific_file(file: UploadFile = File(...)):
 
 @app.post("/upload_shared_file")
 async def upload_shared_file(file: UploadFile = File(...)):
-    documents = process_shared_upload(file)
-    if not documents:
+    if not file:
         return error_response("No documents attached.", status_code=400)
     job_id = str(uuid.uuid4())
     file_path = file_to_tmp(file, job_id)    

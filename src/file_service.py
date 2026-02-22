@@ -1,6 +1,7 @@
 import hashlib
 import os
 from pathlib import Path
+import shutil
 from docling.chunking import HybridChunker, DocChunk
 from docling.datamodel.accelerator_options import AcceleratorDevice, AcceleratorOptions
 from docling.datamodel.base_models import InputFormat
@@ -98,3 +99,18 @@ def process_specific_upload(upload_file: UploadFile) -> list[Document]:
 def process_shared_upload(upload_file: UploadFile) -> list[Document]:
     return process_uploaded(upload_file, SHARED_UPLOAD_PATH)
 
+def process_saved(file_path: str, path: Path) -> list[Document]:
+    try:
+        target_path = path / Path(file_path).name
+        shutil.copy(file_path, target_path)
+        documents = load_file(target_path)
+        return documents
+    except Exception as e:
+        print(f"Error processing saved PDF: {str(e)}")
+        return []
+
+def process_specific_saved(file_path: str) -> list[Document]:
+    return process_saved(file_path, SPECIFIC_UPLOAD_PATH)
+
+def process_shared_saved(file_path: str) -> list[Document]:
+    return process_saved(file_path, SHARED_UPLOAD_PATH)

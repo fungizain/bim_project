@@ -1,7 +1,7 @@
 from celery import Celery
 
 from src.chroma_service import add_to_specific, add_to_shared
-from src.file_service import process_specific_upload, process_shared_upload
+from src.file_service import process_specific_saved, process_shared_saved
 
 celery_app = Celery(
     "tasks",
@@ -12,9 +12,9 @@ celery_app = Celery(
 @celery_app.task(bind=True)
 def process_specific_task(self, file_path: str):
     try:
-        documents = process_specific_upload(file_path)
+        documents = process_specific_saved(file_path)
         if not documents:
-            return {"status": "failed", "error": "No documents extracted"}
+            raise ValueError("No documents extracted")
         add_to_specific(documents)
         return {"status": "done", "msg": f"Indexed {file_path}"}
     except Exception as e:
@@ -23,9 +23,9 @@ def process_specific_task(self, file_path: str):
 @celery_app.task(bind=True)
 def process_shared_task(self, file_path: str):
     try:
-        documents = process_shared_upload(file_path)
+        documents = process_shared_saved(file_path)
         if not documents:
-            return {"status": "failed", "error": "No documents extracted"}
+            raise ValueError("No documents extracted")
         add_to_shared(documents)
         return {"status": "done", "msg": f"Indexed {file_path}"}
     except Exception as e:
