@@ -78,8 +78,18 @@ def load_file(file_path: Path) -> list[Document]:
     result = converter.convert(file_path)
     chunk_iter = chunker.chunk(dl_doc=result.document)
     chunks = list(chunk_iter)
-    chunks = [parse_chunk(chunk) for chunk in chunks]
-    return chunks
+
+    seen_ids = set()
+    final_chunks: list[Document] = []
+
+    for chunk in chunks:
+        doc = parse_chunk(chunk)
+        cid = doc.metadata["chunk_id"]
+        if cid not in seen_ids:
+            seen_ids.add(cid)
+            final_chunks.append(doc)
+
+    return final_chunks
 
 def process_uploaded(upload_file, path: Path) -> list[Document]:
     try:
