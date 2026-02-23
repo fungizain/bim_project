@@ -78,13 +78,9 @@ def prepare_convo(
 
     task_ins = (
         "Task:\n"
-        "- Read the document content (up to 10 chunks provided).\n"
-        f"- Extract the value of the attribute {query_attr} from each relevant chunk.\n"
-        "- Always prioritize chunks from the 'SPECIFIC COLLECTION'.\n"
-        "- If valid answers are found in 'SPECIFIC COLLECTION', return them.\n"
-        "- If no valid answers are found in 'SPECIFIC COLLECTION', then check 'SHARED COLLECTION'.\n"
-        "- If both collections contain valid answers, return results from both, clearly separated.\n"
+        f"- Read the document content and extract the value of the attribute {query_attr}.\n"
         "- If multiple possible answers exist, return all unique values found, up to 5 in total.\n"
+        "- Always prioritize answers from the 'SPECIFIC COLLECTION'.\n"
     )
 
     constraints_ins = "Constraints:\n"
@@ -95,9 +91,7 @@ def prepare_convo(
     elif model_number:
         constraints_ins += f"- Ensure the answer matches model number {model_number}.\n"
     constraints_ins += (
-        "- Check each chunk individually and extract candidate values.\n"
-        "- Do not skip chunks even if one answer seems highly confident.\n"
-        "- Absolutely do not return duplicate answers.\n"
+        "- Do not return duplicate answers.\n"
         "- Sort answers by confidence level from highest to lowest.\n"
     )
 
@@ -107,7 +101,7 @@ def prepare_convo(
         "<value> (<confidence>%) [Ref: <filename> page <page> line <line>]\n"
         "- Answers found in 'SPECIFIC COLLECTION' is roughly 15% more reliable than 'SHARED COLLECTION'.\n"
         "- Confidence maximum is 100%.\n"
-        "- If no answer is found, answer: Not Found"
+        "- If no valid answers are found, answer: Not Found"
     )
 
     instructions = "\n---------------------\n".join([task_ins, constraints_ins, output_ins])
@@ -131,7 +125,7 @@ def model_predict(manufacturer: str, model_number: str, query_attr: str, hits: s
         outputs = model.generate(
             input_ids=input_ids,
             max_new_tokens=256,
-            # do_sample=False,
+            do_sample=False,
             eos_token_id=stop_token_ids
         )
         completion_ids = outputs[0][len(prefill_ids):].cpu().tolist()
