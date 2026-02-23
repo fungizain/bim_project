@@ -101,7 +101,7 @@ def prepare_convo(
         "<value> (<confidence>%) [Ref: <filename> page <page> line <line>]\n"
         "- Answers found in 'SPECIFIC COLLECTION' is roughly 15% more reliable than 'SHARED COLLECTION'.\n"
         "- Confidence maximum is 100%.\n"
-        "- If no valid answers are found, answer: Not Found"
+        # "- If no valid answers are found, answer: Not Found"
     )
 
     instructions = "\n---------------------\n".join([task_ins, constraints_ins, output_ins])
