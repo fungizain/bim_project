@@ -92,8 +92,8 @@ def query_chroma(manufacturer: str, model_number: str, query_attr: str, k: int =
             "\n\n=== FALLBACK: SHARED COLLECTION ===\n\n" + shared_hits
         )
     elif specific_hits:
-        return "\n\n=== PRIORITY: SPECIFIC COLLECTION ===\n\n" + specific_hits
+        return specific_hits
     elif shared_hits:
-        return "\n\n=== FALLBACK: SHARED COLLECTION ===\n\n" + shared_hits
+        return shared_hits
     else:
         return "Not Found"
